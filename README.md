@@ -12,6 +12,10 @@ End users have self-sovereign digital identity. It is a Bitcoin-like
 experience for identity in the form of generating and holding your own
 keys.
 
+Open participation and self-ownership of one's digital identity, how
+one's private keys are generated, what personal information is
+associated with one's account.
+
 ### Authentication
 
 End users own a wallet for holding their keys to sign things using
@@ -28,6 +32,9 @@ Provide the components for web sites to integrate into the
 decentralized p2p network for a identity and data registry, so that
 users have SSO universally across participating web sites with no
 central authority. That would be an attractive proposition.
+
+Enable open participation by web sites in universal SSO using
+Self-Sovereign Identity (SSI).
 
 The entry point for this technology should target Self-hosted Web
 sites. The most reachable target is Apache HTTP Server running
