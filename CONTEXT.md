@@ -69,9 +69,9 @@ An authorized, signed statement that `decent-registry` stores and resolves witho
 _Avoid_: database row, identity, account, profile
 
 **decent-identity**:
-An existing service and repository that performs exact-match lookup, publication, and retrieval of public-key bindings for human-readable identifiers by using `decent-registry` as its storage and resolution backend. It is a component that manages identity records, not the user's identity, wallet, private keys, account, or profile.
+An existing, capability-neutral service and repository that performs exact-match lookup, publication, and retrieval of user-authorized public-key bindings for human-readable identifiers. Identifiers use their raw UTF-8 form without normalization or alias expansion. It is an identity-specific adapter over a `decent-registry` deployment; the Registry owns the record network, validation, replication, and durable storage. The wallet-authorized signed record is the source of publication authority; `decent-identity` does not mint or alter it. `decent-registry` is the authoritative storage and resolution substrate for these records; `decent-identity` owns no authoritative identity data and resolves no binding when the Registry cannot validate or resolve one. Public-key resolution does not itself authenticate users. `decent-identity` may relay verified authorization metadata attached to a Registry Record, but does not interpret threshold approval or decide whether it authorizes a site action. It does not verify login challenges, establish sessions, grant authorization, interpret consent, approve site actions, or own the user's identity, wallet, private keys, account, profile, or application data.
 
-_Avoid_: identity, wallet, account service, registry
+_Avoid_: identity, wallet, account service, authorization authority, registry
 
 ## Authority and Trust
 
