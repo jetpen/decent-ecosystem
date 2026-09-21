@@ -52,9 +52,14 @@ A website, initially a self-hosted Apache/WordPress installation, that integrate
 _Avoid_: component, registry, operator
 
 **Operator**:
-The person or organization that administers a participating site, controls its configuration and proprietary site-owned account representation, but does not control the user's wallet, identity, private keys, user-owned account information, or profiles.
+The person or organization that administers a participating site, controls its configuration and any proprietary site-owned account representation it maintains, but does not control the user's wallet, identity, private keys, user-owned account information, or profiles.
 
 _Avoid_: user, site-owned account information, identity owner
+
+**Storage Provider Operator**:
+The person or organization that administers a `decent-simple-storage` service instance and its infrastructure. The Storage Provider Operator may approve owner onboarding, assign or change a bounded storage quota, and enforce provider-wide operational policy, but does not own user Storage Objects, issue or broaden data consent, interpret site policy, or become the authority for user disclosure.
+
+_Avoid_: data owner, wallet authority, consent authority, site operator
 
 **Component**:
 An independently implemented system or repository with a distinct capability boundary, data responsibility, trust boundary, and lifecycle. The existing components are `decent-identity` and `decent-registry`; the provisional components are `decent-wallet` and `decent-wordpress-auth`.
@@ -74,9 +79,19 @@ An existing, capability-neutral service and repository that performs exact-match
 _Avoid_: identity, wallet, account service, authorization authority, registry
 
 **decent-wordpress-auth**:
-The first site-specific authentication implementation for a participating Apache/WordPress site. It coordinates wallet authentication and purpose-bound disclosure requests, verifies the designated wallet proof, establishes a site-local session, and maps a verified identity to the site's opaque account representation only through the site's user-mediated account-linking policy. It does not issue or broaden wallet capabilities, own the user's identity, wallet keys, account/profile data, consent, Registry records, or ecosystem-wide authorization.
+The first site-specific authentication implementation for a participating Apache/WordPress site. It coordinates wallet authentication and purpose-bound disclosure requests, verifies the designated wallet proof, establishes a site-local session, and uses a user-owned site-specific Account Entity as the conceptual registration record through user-mediated authorization. A separate opaque site-owned account registration is not required by the ecosystem MVP. It does not issue or broaden wallet capabilities, own the user's identity, wallet keys, account/profile data, consent, Registry records, or ecosystem-wide authorization.
 
 _Avoid_: universal authenticator, identity authority, wallet, account owner, consent authority
+
+**decent-simple-storage**:
+A provisional external storage-provider component that onboards owners, accepts, retains, retrieves, and updates user-owned storage objects as a delegated custodian. Its primary ecosystem use is schema-open JSON account entities containing account/profile information, site-specific settings and preferences, and selective disclosures. It also provides generically useful storage for owner-authorized arbitrary binary or textual content whose content type is permitted by a provider allowlist and whose owner has been approved for an assigned capacity limit; the provider enforces that quota before accepting storage growth. It enforces presented capabilities but does not own stored objects, issue or broaden consent, interpret site policy, or become the authority for user disclosure. Each uploaded Storage Object is content-addressed by its SHA-256 content digest and has corresponding public Provider Record discovery metadata in `decent-registry`; Registry is not the object store and does not contain the object content.
+
+_Avoid_: data owner, consent authority, registry backend, identity authority, unallowlisted content, unlimited owner storage
+
+**Storage Object**:
+A user-owned item that may be created, uploaded, retrieved, downloaded, updated, replaced, or deleted through `decent-simple-storage` under applicable capabilities and provider limits. Each uploaded Storage Object is identified for discovery by the SHA-256 digest of its content. An Account Entity is the ecosystem's primary JSON Storage Object with site-specific account/profile meaning; other Storage Objects may contain owner-authorized allowlisted content without becoming Registry Records, identity data, or site-owned account representations.
+
+_Avoid_: Registry Record, identity, site-owned account, unrestricted content
 
 ## Authority and Trust
 
@@ -104,6 +119,11 @@ _Avoid_: global identity deactivation, identity deletion, ecosystem-wide account
 A user-owned, site-specific entity containing account/profile information, settings, preferences, or selective disclosures. An account entity is stored by an external storage provider and is distinct from its public Provider Record, the user's identity, and the participating site's opaque proprietary account representation. Its schema may vary by site, but it is not arbitrary application data.
 
 _Avoid_: registry record, public profile, arbitrary application content, site-owned account
+
+**Master Account Entity**:
+A user-owned, cross-site JSON entity stored through an External Storage Provider for reusable account/profile information, preferences, and selectively disclosable data. The owner may later edit it through an authorized storage operation. A participating site may receive selected fields from it during onboarding, but the entity remains user-owned and distinct from each site's opaque account representation and from site-specific Account Entities; edits do not automatically propagate to site-specific accounts.
+
+_Avoid_: global public profile, site-owned account, Registry Record, unrestricted disclosure
 
 **External Storage Provider**:
 A separate component that accepts, retains, retrieves, and updates user-owned account entities as a delegated custodian. It enforces presented capabilities but does not own the entities, issue or broaden consent, interpret site policy, or become the authority for user disclosure. `decent-simple-storage` is the provisional MVP component for this role.
