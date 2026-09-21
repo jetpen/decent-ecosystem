@@ -72,3 +72,35 @@ _Avoid_: database row, identity, account, profile
 An existing service and repository that performs exact-match lookup, publication, and retrieval of public-key bindings for human-readable identifiers by using `decent-registry` as its storage and resolution backend. It is a component that manages identity records, not the user's identity, wallet, private keys, account, or profile.
 
 _Avoid_: identity, wallet, account service, registry
+
+## Authority and Trust
+
+**User-sovereign capability model**:
+The user controls disclosure and authorization for identity, account, and profile information. The wallet is the sole private-key custodian and the user's consent agent. Components receive only purpose-bound capabilities, and the participating site controls only its opaque site-owned account representation.
+
+_Avoid_: service-mediated ownership, authentication-implies-consent, ecosystem-wide authorization
+
+**Purpose-bound consent**:
+A user's explicit wallet-mediated grant that is limited to a requesting site or component, a stated purpose, requested data or capability, and an appropriate interaction or session scope. Authentication alone does not imply consent.
+
+_Avoid_: implicit consent, unrestricted disclosure, standing access by default
+
+**Capability-neutral infrastructure**:
+The conceptual role of `decent-identity` and `decent-registry`: identity-binding lookup/publication and authorized registry-record storage/resolution without ownership of account/profile data, interpretation of user consent, site authorization, or approval of site actions.
+
+_Avoid_: policy authority, account owner, consent authority
+
+**Site relationship**:
+The relationship between a user's user-owned account information and a particular participating site, including the site's opaque account representation and associated sessions. Deactivation ends or refuses this relationship without deleting the user's identity, wallet, or unrelated site relationships.
+
+_Avoid_: global identity deactivation, identity deletion, ecosystem-wide account
+
+**Account Entity**:
+A user-owned, site-specific entity containing account/profile information, settings, preferences, or selective disclosures. An account entity is stored by an external storage provider and is distinct from its public Provider Record, the user's identity, and the participating site's opaque proprietary account representation. Its schema may vary by site, but it is not arbitrary application data.
+
+_Avoid_: registry record, public profile, arbitrary application content, site-owned account
+
+**External Storage Provider**:
+A separate component that accepts, retains, retrieves, and updates user-owned account entities as a delegated custodian. It enforces presented capabilities but does not own the entities, issue or broaden consent, interpret site policy, or become the authority for user disclosure. `decent-simple-storage` is the provisional MVP component for this role.
+
+_Avoid_: registry backend, identity authority, data owner, consent authority
