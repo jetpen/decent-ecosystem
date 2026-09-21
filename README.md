@@ -4,6 +4,26 @@ This document repository serves to provide the vision around the
 decentralized ecosystem for securing the free and open Internet into
 the future.
 
+## Documentation index
+
+Canonical domain language: [`CONTEXT.md`](CONTEXT.md)
+
+Canonical vision: [`docs/vision/mvp-scope-and-non-goals.md`](docs/vision/mvp-scope-and-non-goals.md)
+
+Component decompositions:
+
+- [`decent-registry`](docs/components/decent-registry.md)
+- [`decent-identity`](docs/components/decent-identity.md)
+- [`decent-wallet`](docs/components/decent-wallet.md)
+- [`decent-wordpress-auth`](docs/components/decent-wordpress-auth.md)
+- [`decent-simple-storage`](docs/components/decent-simple-storage.md)
+
+Research: [`docs/research/wordpress-authentication-challenge.md`](docs/research/wordpress-authentication-challenge.md)
+
+Decision provenance: [Ecosystem vision and component decomposition](https://github.com/jetpen/decent-ecosystem/issues/1)
+
+The canonical documents are conceptual. Implementation-ready specifications belong in the corresponding component repositories.
+
 ## Goals
 
 ### Self-Sovereign Identity (SSI)
@@ -46,7 +66,7 @@ WordPress. About 40.3% of all web sites run WordPress, according to
 
 Preserve the familiar web browser experience for the end user, except
 augment the authentication capabilities associated with passkey in
-combination with a wallet application to manage private keys. 
+combination with a wallet application to manage private keys.
 
 ### Data sovereignty for censorship-resistance
 
