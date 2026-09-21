@@ -25,7 +25,7 @@ A user-controlled component that generates, holds, and strictly protects the use
 _Avoid_: identity, account, profile, registry, consent authority for site policy
 
 **Authentication**:
-The wallet's response to a website challenge that demonstrates control of the identity's private key. Authentication establishes control of an identity for a particular interaction; it does not by itself grant access to account information or site resources.
+The wallet's response to a website challenge that demonstrates control of the identity's private key. Authentication establishes control of an identity for a particular interaction; the participating application establishes its own login session only after successful verification. Authentication does not by itself grant access to account information or site resources.
 
 _Avoid_: authorization, identity resolution, login session
 
