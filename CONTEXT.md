@@ -73,6 +73,11 @@ An existing, capability-neutral service and repository that performs exact-match
 
 _Avoid_: identity, wallet, account service, authorization authority, registry
 
+**decent-wordpress-auth**:
+The first site-specific authentication implementation for a participating Apache/WordPress site. It coordinates wallet authentication and purpose-bound disclosure requests, verifies the designated wallet proof, establishes a site-local session, and maps a verified identity to the site's opaque account representation only through the site's user-mediated account-linking policy. It does not issue or broaden wallet capabilities, own the user's identity, wallet keys, account/profile data, consent, Registry records, or ecosystem-wide authorization.
+
+_Avoid_: universal authenticator, identity authority, wallet, account owner, consent authority
+
 ## Authority and Trust
 
 **User-sovereign capability model**:
