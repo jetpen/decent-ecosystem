@@ -20,9 +20,9 @@ Additional user-owned data beyond the properties of the user's identity and acco
 _Avoid_: identity properties, account properties, website-owned profile
 
 **Wallet**:
-A user-controlled component that holds and strictly protects the user's private-key and public-key pair for accepting authentication challenges and responding to them. The private key is never exposed outside the wallet. The wallet is distinct from the user's identity, account, profile, and registry records.
+A user-controlled component that generates, holds, and strictly protects the user's private-key and public-key pair; accepts authentication challenges; responds to them; signs user-authorized Registry updates; participates in threshold approval through independent multisignature signing; and acts as the user's consent agent for disclosure and selected threshold-approved operations. Signer wallets retain their own secrets, and only finalized threshold-approved material is submitted to the Registry. Its authoritative retained data is limited to key material and local signing, approval, and authorization state; account/profile entities remain external user-owned data. Wallet initialization includes an owner setup step that establishes a password-derived symmetric encryption key for securely storing wallet contents. The password and derived key remain local to wallet protection and are never displayed, logged, transmitted, or otherwise disclosed; the private key is never exposed outside the wallet. The wallet is distinct from the user's identity, account, profile, and registry records.
 
-_Avoid_: identity, account, profile, registry
+_Avoid_: identity, account, profile, registry, consent authority for site policy
 
 **Authentication**:
 The wallet's response to a website challenge that demonstrates control of the identity's private key. Authentication establishes control of an identity for a particular interaction; it does not by itself grant access to account information or site resources.
@@ -47,7 +47,7 @@ The person who controls the identity and wallet, owns the user-owned account inf
 _Avoid_: account, operator, site administrator
 
 **Participating Site**:
-A website, initially a self-hosted Apache/WordPress installation, that integrates the authentication component and offers site services to users.
+A website, initially a self-hosted Apache/WordPress installation, that integrates a site-specific authentication implementation and offers site services to users. `decent-wordpress-auth` is the first such implementation, not a universal authentication authority.
 
 _Avoid_: component, registry, operator
 
