@@ -58,8 +58,32 @@ for case in manifest.get("unknown_fields", []):
         raise AssertionError(f"unexpected unknown-field handling in {case['file']}")
     checks += 1
 
-# Each semantic outcome vector is a documentation label, not an executable status mapping.
-for vector in manifest.get("outcome_vectors", []):
+# Each semantic outcome vector is a documented observation category, not a shared wire status.
+required_outcomes = {
+    "unsupported-family-schema",
+    "bad-required-field",
+    "object-bytes-do-not-match-requested-digest",
+    "provider-record-invalid-or-unauthorized",
+    "identity-key-not-resolved",
+    "replacement-key-without-continuity",
+    "replacement-key-continuity-proof-valid",
+    "old-key-unavailable-trusted-authority",
+    "same-label-without-continuity-proof",
+    "signature-valid-but-time-authorization-unproven",
+    "current-key-status-not-established",
+    "registry-confirms-no-record",
+    "registry-times-out",
+    "external-object-cannot-be-fetched",
+    "two-different-bytes-for-same-revision",
+}
+outcome_vectors = manifest.get("outcome_vectors", [])
+outcome_cases = [vector.get("case") for vector in outcome_vectors]
+if len(outcome_cases) != len(set(outcome_cases)):
+    raise AssertionError("semantic outcome vector case names must be unique")
+missing_outcomes = required_outcomes - set(outcome_cases)
+if missing_outcomes:
+    raise AssertionError(f"missing required semantic outcome vectors: {sorted(missing_outcomes)}")
+for vector in outcome_vectors:
     if not vector.get("case") or not vector.get("observations") or not vector.get("expected"):
         raise AssertionError(f"incomplete semantic outcome vector: {vector}")
     checks += 1

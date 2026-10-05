@@ -25,9 +25,19 @@ An entry is a statement by the graph owner. It does not imply that the subject r
 
 A Trust Assertions Storage Object is an issuer-authored JSON collection. The object-level `issuer_public_key` names the key the object claims as its issuer. Each assertion entry identifies a `subject_public_key` and a non-empty application-defined `purpose`, such as “article publisher” or “identity vouching.” The issuer's assertion is that the purpose-specific relationship holds. There is no separate standardized claim-value field or universal purpose vocabulary.
 
-A subject need not sign or consent to another identity's statement about them. Purpose communicates the issuer's asserted relationship/scope; it is not a standard score or an application decision. Evidence, expiry, truth, issuer competence, and interpretation are not established by the object schema.
+A subject need not sign or consent to another identity's statement about them. Purpose communicates the issuer's asserted relationship/scope; it is not a standard score or an application decision. In v1, the collection's issuer claim is not cryptographically signed over the JSON bytes; when an issuer signature is available in another evidence context, it authenticates only the issuer's statement, not the subject's consent or the assertion's truth. Evidence, expiry, truth, issuer competence, and interpretation are not established by the object schema.
 
-**Content-authorship limitation:** in protocol v1, neither JSON object carries a required content signature. The existing Registry Provider Record signature authenticates Registry metadata; it does not sign the referenced JSON bytes. The object-level owner/issuer key is a field in the JSON statement, not cryptographic proof that the key holder authored those bytes. Do not describe a Provider Record signature as proving JSON-content authorship, truth, or human identity. Content signing is outside this version.
+## Content-authorship limitation
+
+In protocol v1, neither JSON object carries a required content signature. The existing Registry Provider Record signature authenticates Registry metadata; it does not sign the referenced JSON bytes. The object-level owner/issuer key is a field in the JSON statement, not cryptographic proof that the key holder authored those bytes. Content signing is outside this version.
+
+## Identity references, key continuity, and verification observations
+
+The Social Graph owner and Trust Assertions issuer are referenced by their public keys in the object fields. Each relationship/assertion subject is also referenced directly by that subject's public key. The resolved identity decision #20 describes the authorized graph-owner/issuer key as the identity reference for signed records. In this protocol v1, however, the JSON object has no required content signature, so the key field is only a claim and does not cryptographically prove who authored those bytes. An Identity Record may resolve a name to a key under Registry rules, but a name, reused label, or current lookup alone does not prove that a replacement key controls the same graph or identity.
+
+A replacement key is separate from the old-key identity and controls a separate graph unless explicit, verifiable continuity evidence links the keys, as resolved in [identity continuity decision #20](https://github.com/jetpen/decent-ecosystem/issues/20). Accepting a continuity link requires signatures by both old and new keys. If the old key is unavailable or compromised, treat the new key as separate unless an explicitly trusted continuity authority establishes the link. Never infer continuity from a reused label or claim. Apply the same identity distinction to Trust Assertions issuers: a changed issuer key is not presumed to represent the same issuer without explicit continuity evidence. This protocol's JSON schemas define no content-signature or continuity-proof format; an object's claimed owner/issuer key does not itself prove authorship or continuity.
+
+When signature evidence exists, keep three observations distinct: whether the signature is valid for the key and bytes; whether that key was authorized at the relevant time, but only when supporting evidence establishes it; and the key/record's current status. A valid signature alone proves neither signing time nor historical authorization nor current status. Preserve records whose key or identity cannot currently be resolved and report them as unresolved/unverifiable; they are not positive identity or trust evidence by default. These rules do not establish a unique human, truth, or safety.
 
 ## Registry records and storage boundary
 
@@ -56,6 +66,8 @@ flowchart LR
 The arrows describe conceptual roles, not additional Registry APIs. A Provider Record signature authenticates the Registry metadata update, not the JSON bytes at the referenced location.
 
 ## V1 object schema and revision rules
+
+Both JSON Schema files are Draft 2020-12. Public-key fields must be 64 lowercase hexadecimal characters representing 32-byte Ed25519 public keys. The Trust Assertions schema requires a non-empty string `purpose` for each assertion. The schemas reject schema versions other than `1`; this directory is the v1 profile, not a promise that later schema versions will share the same shape. The schemas validate object structure and key encoding, not cryptographic continuity; v1 defines no in-object mechanism for proving that a replacement key controls the prior key's graph.
 
 Normative JSON Schemas are provided separately:
 
@@ -115,7 +127,7 @@ The Registry implements general Provider Record publication and resolution. Soci
 
 ### Revise or replace
 
-A revision to the same object lifecycle retains its stable ID, increments `version` by one, and includes the immediate predecessor digest. A semantically distinct replacement uses a new ID and starts at version 1. Publish the new bytes and Provider Record before requesting withdrawal of an older Provider Record. A higher object version does not by itself prove global currentness, select a winner across conflicting candidates, or prove identity continuity across a changed key.
+A revision to the same object lifecycle retains its stable ID, increments `version` by one, and includes the immediate predecessor digest. A semantically distinct replacement uses a new ID and starts at version 1. Publish the new bytes and Provider Record before requesting withdrawal of an older Provider Record. A higher object version does not by itself prove global currentness, select a winner across conflicting candidates, or prove identity continuity across a changed key. A replacement signing key is a separate graph unless explicit, verifiable continuity evidence links old and new keys; accept continuity only with both keys' signatures or, when the old key is unavailable/compromised, an explicitly trusted continuity authority's evidence.
 
 ### Withdraw
 
@@ -141,7 +153,7 @@ sequenceDiagram
 
 ## Protocol outcome observations
 
-- Report semantic outcomes distinctly: unsupported family schema version; malformed object or invalid required fields; exact-byte digest mismatch; Provider Record validation/authorization observation; unresolved key or continuity reference; confirmed Registry absence; Registry unavailable or inconclusive; external object inaccessible; conflicting revisions for the same object ID/schema version/revision.
+- Report semantic outcomes distinctly: unsupported family schema version; malformed object or invalid required fields; exact-byte digest mismatch; Provider Record validation/authorization observation; unresolved key or continuity reference; signature validity; authorization-at-relevant-time when evidenced (otherwise unproven); current key/record status as a separate observation; confirmed Registry absence; Registry unavailable or inconclusive; external object inaccessible; conflicting revisions for the same object ID/schema version/revision.
 - Conflicting revisions have no protocol-defined winner or merge. A valid Registry record with no observed withdrawal is “not known withdrawn,” not proof that it is globally latest. Applications choose verification strictness, candidate selection, rejection/acceptance, and treatment of incomplete or stale evidence. A key signature, Provider Record, or trust path does not establish a unique human, truth, competence, or safety. The semantic outcome vocabulary is summarized by optional fixture examples; it is not a required wire enum/status code, and it does not prescribe application acceptance.
 
 ## Privacy, access, and limits
@@ -153,6 +165,8 @@ Consent to publish, access, and reuse/republish remain distinct principles, but 
 ## Application-owned trust interpretation
 
 The protocol standardizes no Web-of-Trust evaluator, request/result interface, search bound, propagation rule, score, reputation, access control, or acceptance algorithm. Applications retrieve graph/assertion objects by digest and decide whether and how to evaluate them. They choose which trust anchors, assertions, purposes, evidence, versions, observed withdrawals, or conflicts to consider; whether to include Social Graph relationships; what assumptions to disclose; and how results affect their own decisions. Social Graph edges are not trust evidence by default and trust is not automatically transitive.
+
+The protocol's identity-reference and continuity outcomes specify observations, not a universal key-resolution or trust algorithm. Clients preserve unresolved records and report key/identity resolution, signature validity, evidenced historical authorization, and current status separately. These observations alone do not define application acceptance.
 
 ## Three destination scenarios
 
@@ -178,7 +192,7 @@ Component responsibilities remain:
 
 - **`decent-registry`:** Provider Record publication/resolution/withdrawal semantics and component-level authorization/lookup behavior. Withdrawal is implemented in PR #119 with the limits above.
 - **External Storage Provider / `decent-simple-storage`:** retain and serve Storage Object bytes under its own service contract; this protocol adds no encryption, bearer-token, deletion, or availability guarantee.
-- **Identity/application components:** supply Social Graph and Trust Assertions digests by application-specific means; no foundational identity-to-graph search is required.
+- **Identity/application components:** supply Social Graph and Trust Assertions digests by application-specific means; no foundational identity-to-graph search is required. A changed key is a separate identity absent explicit, verifiable continuity evidence; these fixtures do not define or verify a continuity-proof format.
 - **Consuming applications:** choose verification enforcement, object/candidate selection, trust policy, evaluation, and application decisions.
 
 Implementation, production security validation, and deployment specifications belong in the component repositories.
