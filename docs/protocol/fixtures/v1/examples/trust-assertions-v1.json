@@ -1,0 +1,16 @@
+{
+  "id": "alice-assertions",
+  "schema_version": 1,
+  "version": 1,
+  "issuer_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+  "assertions": [
+    {
+      "subject_public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+      "purpose": "article-publisher"
+    },
+    {
+      "subject_public_key": "3333333333333333333333333333333333333333333333333333333333333333",
+      "purpose": "identity-vouching"
+    }
+  ]
+}

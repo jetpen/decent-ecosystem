@@ -1,0 +1,101 @@
+{
+  "schema_draft": "2020-12",
+  "rules": [
+    "Provider Record transitions are validated in the Registry component, not by these object schemas.",
+    "Object SHA-256 digests are computed over exact stored UTF-8 bytes, including trailing newline if present.",
+    "Revision sequencing and predecessor-chain continuity require stateful fixture verification beyond standalone JSON Schema validation."
+  ],
+  "valid": [
+    {
+      "file": "examples/social-graph-v1.json",
+      "family": "social-graph",
+      "schema_version": 1,
+      "expected": "valid"
+    },
+    {
+      "file": "examples/trust-assertions-v1.json",
+      "family": "trust-assertions",
+      "schema_version": 1,
+      "expected": "valid"
+    },
+    {
+      "file": "examples/social-graph-v2-revision.json",
+      "family": "social-graph",
+      "schema_version": 1,
+      "expected": "valid-revision"
+    },
+    {
+      "file": "examples/trust-assertions-v2-revision.json",
+      "family": "trust-assertions",
+      "schema_version": 1,
+      "expected": "valid-revision"
+    },
+    {
+      "file": "examples/social-graph-v1-unknown-field.json",
+      "family": "social-graph",
+      "schema_version": 1,
+      "expected": "valid-ignore-unknown"
+    },
+    {"file":"examples/trust-assertions-v1-unknown-field.json","family":"trust-assertions","schema_version":1,"expected":"valid-ignore-unknown"}
+  ],
+  "invalid": [
+    {"file":"invalid/social-graph-missing-owner.json","family":"social-graph","expected":"invalid-object"},
+    {"file":"invalid/trust-assertions-empty-purpose.json","family":"trust-assertions","expected":"invalid-object"},
+    {"file":"invalid/social-graph-short-key.json","family":"social-graph","expected":"invalid-object"},
+    {"file":"invalid/social-graph-v1-has-previous-digest.json","family":"social-graph","expected":"invalid-object"},
+    {"file":"invalid/trust-assertions-v2-missing-previous.json","family":"trust-assertions","expected":"invalid-object"},
+    {"file":"invalid/trust-assertion-purpose-not-string.json","family":"trust-assertions","expected":"invalid-object"},
+    {"file":"invalid/social-graph-relationships-not-array.json","family":"social-graph","expected":"invalid-object"}
+  ],
+  "invalid_stateful": [
+    {"file":"invalid/social-graph-v2-wrong-previous.json","family":"social-graph","predecessor":"examples/social-graph-v1.json","expected":"invalid-predecessor-digest"}
+  ],
+  "unsupported": [
+    {
+      "file": "unsupported/social-graph-schema-v2.json",
+      "family": "social-graph",
+      "expected": "unsupported-schema-version"
+    }
+  ],
+  "conflicts": [
+    {
+      "files": [
+        "conflicts/social-graph-v1-compact.json",
+        "conflicts/social-graph-v1-pretty.json"
+      ],
+      "family": "social-graph",
+      "same_parsed_value": true,
+      "different_exact_bytes": true,
+      "expected": "conflicting-revisions"
+    }
+  ],
+  "outcome_vectors": [
+    {"case":"unsupported-family-schema","observations":["schema_version is not supported"],"expected":"unsupported-schema-version"},
+    {"case":"bad-required-field","observations":["required subject public key is missing"],"expected":"malformed-object"},
+    {"case":"object-bytes-do-not-match-requested-digest","observations":["fetched bytes hash differently from requested digest"],"expected":"digest-mismatch"},
+    {"case":"provider-record-invalid-or-unauthorized","observations":["Registry metadata validation did not succeed"],"expected":"provider-record-validation-observation"},
+    {"case":"identity-key-not-resolved","observations":["referenced key or continuity evidence cannot be resolved"],"expected":"unresolved-key-or-continuity"},
+    {"case":"registry-confirms-no-record","observations":["successful lookup response confirms no matching Provider Record within this query scope"],"expected":"registry-absence"},
+    {"case":"registry-times-out","observations":["lookup timed out or was inconclusive"],"expected":"registry-unavailable-or-inconclusive"},
+    {"case":"external-object-cannot-be-fetched","observations":["Provider Record was returned but external location is inaccessible"],"expected":"external-object-inaccessible"},
+    {"case":"two-different-bytes-for-same-revision","observations":["same id/schema_version/version; different exact bytes and digests"],"expected":"conflicting-revisions"}
+  ],
+  "digest_vectors": [
+    {
+      "file": "examples/social-graph-v1.json",
+      "sha256": "f77d896277fe1d8b3d2f16d8b6f59e68311bf0af10a93e39567619b9a4099820"
+    },
+    {
+      "file": "examples/trust-assertions-v1.json",
+      "sha256": "f6f825f3f9b1f932fdfc79c10a4208d29867827941703334e1bfa183fbd732d6"
+    },
+    {
+      "file": "conflicts/social-graph-v1-compact.json",
+      "sha256": "7a331b1322df48c02d14a7456ee8a4cd6ffee93939ca2b348bc85b622e2f26f9"
+    },
+    {
+      "file": "conflicts/social-graph-v1-pretty.json",
+      "sha256": "f77d896277fe1d8b3d2f16d8b6f59e68311bf0af10a93e39567619b9a4099820"
+    }
+  ]
+}

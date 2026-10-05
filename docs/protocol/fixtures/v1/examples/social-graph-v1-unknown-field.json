@@ -1,0 +1,16 @@
+{
+  "id": "alice-social",
+  "schema_version": 1,
+  "version": 1,
+  "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+  "relationships": [
+    {
+      "subject_public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+      "predicate": "collaborates-with",
+      "context": {
+        "project": "example"
+      }
+    }
+  ],
+  "display_hint": "ignored by v1 protocol clients"
+}

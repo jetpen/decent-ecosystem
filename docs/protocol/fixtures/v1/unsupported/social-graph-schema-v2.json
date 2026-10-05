@@ -1,0 +1,15 @@
+{
+  "id": "alice-social",
+  "schema_version": 2,
+  "version": 1,
+  "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+  "relationships": [
+    {
+      "subject_public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+      "predicate": "collaborates-with",
+      "context": {
+        "project": "example"
+      }
+    }
+  ]
+}
