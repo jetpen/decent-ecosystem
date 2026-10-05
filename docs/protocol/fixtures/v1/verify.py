@@ -45,6 +45,25 @@ for case in manifest["valid"]:
 for case in manifest["invalid"]:
     require_schema(case["file"], case["family"], False)
 
+# Unknown fields have no v1 semantics and must not affect defined fields.
+for case in manifest.get("unknown_fields", []):
+    document = load(case["file"])
+    require_schema(case["file"], case["family"], True)
+    field = case["field"]
+    if field not in document:
+        raise AssertionError(f"{case['file']} is missing its unknown-field probe")
+    baseline = dict(document)
+    baseline.pop(field)
+    if baseline != {key: value for key, value in document.items() if key != field}:
+        raise AssertionError(f"unexpected unknown-field handling in {case['file']}")
+    checks += 1
+
+# Each semantic outcome vector is a documentation label, not an executable status mapping.
+for vector in manifest.get("outcome_vectors", []):
+    if not vector.get("case") or not vector.get("observations") or not vector.get("expected"):
+        raise AssertionError(f"incomplete semantic outcome vector: {vector}")
+    checks += 1
+
 for case in manifest["unsupported"]:
     document = load(case["file"])
     errors = schema_errors(case["family"], case["file"])
@@ -68,7 +87,7 @@ for conflict in manifest["conflicts"]:
         raise AssertionError("conflict fixture revision identity differs")
     checks += 1
 
-# Stateful predecessor checks: validate both the valid link and deliberately wrong link.
+# Stateful predecessor checks: validate both valid links and deliberately invalid links for both families.
 for family, v1_name, v2_name in [
     ("social-graph", "examples/social-graph-v1.json", "examples/social-graph-v2-revision.json"),
     ("trust-assertions", "examples/trust-assertions-v1.json", "examples/trust-assertions-v2-revision.json"),
@@ -82,10 +101,18 @@ for family, v1_name, v2_name in [
 invalid_stateful = manifest.get("invalid_stateful", [])
 for case in invalid_stateful:
     candidate = load(case["file"])
-    predecessor = (ROOT / case["predecessor"]).read_bytes()
-    actual_digest = hashlib.sha256(predecessor).hexdigest()
-    if candidate.get("previous_digest") == actual_digest:
+    predecessor = load(case["predecessor"])
+    require_schema(case["file"], case["family"], case["expected"] != "invalid-predecessor-field")
+    predecessor_bytes = (ROOT / case["predecessor"]).read_bytes()
+    actual_digest = hashlib.sha256(predecessor_bytes).hexdigest()
+    if candidate.get("id") != predecessor.get("id"):
+        raise AssertionError(f"{case['file']} does not refer to the predecessor object ID")
+    if candidate.get("version") != predecessor.get("version") + 1:
+        raise AssertionError(f"{case['file']} does not increment predecessor version by one")
+    if case["expected"] == "invalid-predecessor-digest" and candidate.get("previous_digest") == actual_digest:
         raise AssertionError(f"{case['file']} unexpectedly links the actual predecessor")
+    if case["expected"] == "invalid-predecessor-field" and "previous_digest" in candidate:
+        raise AssertionError(f"{case['file']} unexpectedly has a predecessor digest")
     checks += 1
 
 print(f"fixture verification passed: {checks} checks; {len(manifest['valid'])} valid, {len(manifest['invalid'])} schema-invalid, {len(invalid_stateful)} invalid-stateful, {len(manifest['unsupported'])} unsupported, {len(manifest['conflicts'])} conflict, {len(manifest['digest_vectors'])} digest, 2 valid stateful-chain")

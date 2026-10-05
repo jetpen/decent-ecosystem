@@ -16,7 +16,7 @@ Both are JSON Schema Draft 2020-12. The schema validates object shape and primit
 - `unsupported/`: a syntactically well-formed object declaring a schema version not supported by this v1 profile. A consumer reports `unsupported-schema-version`; it does not silently reinterpret it as v1.
 - `conflicts/`: same parsed Social Graph content and same ID/schema version/revision represented with different exact JSON bytes. The digests differ, so clients that encounter both report conflicting revisions; there is no normalization, merge, or protocol-defined winner.
 - `outcome_vectors`: semantic outcomes that a consumer should distinguish; these are not a shared wire enum/status code and do not dictate application acceptance.
-- [`verify.py`](verify.py): executable offline verifier for JSON Schema validity, expected digest vectors, exact-byte conflicts, and predecessor-chain consistency. Requires the `jsonschema` Python package.
+- [`verify.py`](verify.py): executable offline verifier for JSON Schema validity, expected digest vectors, exact-byte conflicts, predecessor-chain consistency, unknown-field probes, and outcome-vector completeness. Requires the `jsonschema` Python package.
 
 ## Byte and revision rules
 
@@ -26,7 +26,7 @@ Version 1 has no `previous_digest`. A later revision retains the same stable obj
 
 ## Conformance boundary
 
-The fixture verifier `verify.py` passes the manifest fixtures, exact-byte digest vectors, valid/invalid predecessor-chain checks, and conflicting-revision checks. Object-profile conformance still includes schema validity, family/version handling, and unknown-field tolerance with no inferred semantics; it does not assert that an application trusts or accepts a claim. Semantic outcome categories are listed in the manifest.
+The verifier checks object schemas, both families' ignored-unknown-field probes, the semantic outcome-vector catalog's completeness, exact-byte digests, valid/invalid predecessor-chain checks, and conflicting-revision constraints. Outcome vectors document application/service observations; they do not implement or test a live service-status mapping. Object-profile conformance does not assert that an application trusts or accepts a claim.
 
 Provider Record authorization, withdrawal/tombstone transitions, Registry lookup after withdrawal, and service API/CLI behavior are covered by the `decent-registry` component contract. In particular, these fixtures do not assert network-wide CAS, immediate/global propagation, external-object deletion, history/copy erasure, or mixed-version migration guarantees.
 
@@ -38,8 +38,8 @@ Provider Record authorization, withdrawal/tombstone transitions, Registry lookup
 | Issue/verify/withdraw a scoped trust assertion | Trust Assertions schema, collection examples, Registry PR #119 | Application supplies the collection digest and interprets purposes; Registry withdrawal semantics and limits are verified by Registry component tests; copies and external content are not erased. |
 | Evaluate a path and make an application decision | Both schemas, revision/conflict and outcome examples | Application chooses inputs, whether to include graph edges, policy, verification strictness, evaluation, and decision; no shared evaluator or score. |
 
-The manifest lists outcome-vector names/descriptions, not executable simulated service responses. A client/service conformance suite can map its own statuses and errors to these semantic categories; the fixture package does not claim to test live network/service outcomes.
+The manifest lists 9 semantic outcome vectors. These are documented observation categories, not runnable consumer decisions or executable simulated service responses. A client/service conformance suite may map its own statuses and errors to these categories; these fixtures do not test live network/service outcomes.
 
 ## Expected fixture summary
 
-`manifest.json` contains **5 valid/valid-revision cases**, **5 schema-invalid cases**, **1 invalid stateful predecessor case**, **1 unsupported-version case**, **1 conflicting-revision pair**, **9 semantic outcome vectors**, and **4 exact-byte digest vectors**. Stateful checks are called out separately because JSON Schema alone cannot compare object revisions across documents.
+`manifest.json` contains **7 valid/valid-revision cases** (including both families with ignored unknown fields), **7 schema-invalid cases**, **2 invalid stateful predecessor cases** (one with wrong digest, one missing the required predecessor field), **1 unsupported-version case**, **1 conflicting-revision pair**, **9 semantic outcome vectors**, and **4 exact-byte digest vectors**. Stateful checks are called out separately because JSON Schema alone cannot compare object revisions across documents.
