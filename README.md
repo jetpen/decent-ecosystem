@@ -10,6 +10,8 @@ Canonical domain language: [`CONTEXT.md`](CONTEXT.md)
 
 Canonical vision: [`docs/vision/mvp-scope-and-non-goals.md`](docs/vision/mvp-scope-and-non-goals.md)
 
+The ecosystem Social Graph and Web-of-Trust specification, schemas, and conformance assets are indexed under [the protocol specification](docs/protocol/identity-linked-social-graph-and-web-of-trust.md).
+
 Component decompositions:
 
 - [`decent-registry`](docs/components/decent-registry.md)

@@ -1,0 +1,20 @@
+{
+  "id": "alice-social",
+  "schema_version": 1,
+  "version": 2,
+  "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+  "relationships": [
+    {
+      "subject_public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+      "predicate": "collaborates-with",
+      "context": {
+        "project": "example"
+      }
+    },
+    {
+      "subject_public_key": "3333333333333333333333333333333333333333333333333333333333333333",
+      "predicate": "knows"
+    }
+  ],
+  "previous_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+}

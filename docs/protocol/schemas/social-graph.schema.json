@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Decent Ecosystem Social Graph v1",
+  "description": "Owner-authored Social Graph JSON Storage Object. Unknown properties have no v1 protocol semantics.",
+  "type": "object",
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "schema_version": {"type": "integer", "const": 1},
+    "version": {"type": "integer", "minimum": 1},
+    "previous_digest": {"$ref": "#/$defs/sha256Digest"},
+    "owner_public_key": {"$ref": "#/$defs/ed25519PublicKey"},
+    "relationships": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/relationship"}
+    }
+  },
+  "required": ["id", "schema_version", "version", "owner_public_key", "relationships"],
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {"properties": {"version": {"const": 1}}, "required": ["version"]},
+      "then": {"not": {"required": ["previous_digest"]}},
+      "else": {"required": ["previous_digest"]}
+    }
+  ],
+  "$defs": {
+    "sha256Digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Lowercase hexadecimal SHA-256 digest of exact stored UTF-8 JSON bytes."
+    },
+    "ed25519PublicKey": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Lowercase hexadecimal encoding of exactly 32 Ed25519 public-key bytes."
+    },
+    "relationship": {
+      "type": "object",
+      "properties": {
+        "subject_public_key": {"$ref": "#/$defs/ed25519PublicKey"},
+        "predicate": {"type": "string", "minLength": 1},
+        "context": {}
+      },
+      "required": ["subject_public_key", "predicate"],
+      "additionalProperties": true
+    }
+  }
+}

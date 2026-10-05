@@ -1,0 +1,21 @@
+{
+  "id": "alice-assertions",
+  "schema_version": 1,
+  "version": 2,
+  "issuer_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+  "assertions": [
+    {
+      "subject_public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+      "purpose": "article-publisher"
+    },
+    {
+      "subject_public_key": "3333333333333333333333333333333333333333333333333333333333333333",
+      "purpose": "identity-vouching"
+    },
+    {
+      "subject_public_key": "4444444444444444444444444444444444444444444444444444444444444444",
+      "purpose": "project-reviewer"
+    }
+  ],
+  "previous_digest": "f6f825f3f9b1f932fdfc79c10a4208d29867827941703334e1bfa183fbd732d6"
+}
