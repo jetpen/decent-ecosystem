@@ -1,7 +1,8 @@
 # Keycloak integration surfaces for wallet authentication
 
-**Research date:** 2026-10-05
-**Keycloak version examined:** 26.8.0 (documentation release version; the public 26.8.0 developer guide, release notes, configuration and API references were checked).
+**Initial research date:** 2026-10-05
+**Passkey research expanded:** 2026-10-06
+**Keycloak version examined:** 26.8.0 (release documentation, source tag, and configuration/API references).
 **Context:** Wayfinder research ticket [#30](https://github.com/jetpen/decent-ecosystem/issues/30), under the [shared ecosystem authentication, authorization, and Keycloak architecture map #29](https://github.com/jetpen/decent-ecosystem/issues/29). Scope is governed by [#36](https://github.com/jetpen/decent-ecosystem/issues/36). This is feasibility research, not a choice of the shared protocol or a recommendation to fork Keycloak.
 
 ## Executive result
@@ -88,10 +89,46 @@ Provider packaging is not “copy a JAR and forget”: Keycloak’s developer gu
 
 The 26.8.0 developer guide states that the official container image uses OpenJDK 21; current supported-configurations page likewise names Java 21 for the image and lists Podman as a supported container deployment runtime. Extension compilation/runtime must match the actual Keycloak base image. [Preface to Developer Guide](https://www.keycloak.org/docs/26.8.0/server_development/#_preface), [Supported Configurations](https://www.keycloak.org/server/supported-configurations)
 
+### 8. Passkey support and decent-identity compatibility
+
+#### Supported Keycloak signup → Passkey enrollment → Passkey login
+
+Keycloak 26.8 is a WebAuthn Relying Party and provides Passkey registration and authentication using its WebAuthn Passwordless features. Keycloak’s passkey integration is documented as supported (Passkeys integration entered supported status in the 26.4 release); the RP must still run over a valid WebAuthn origin and the user’s browser/platform/authenticator must implement compatible WebAuthn features. [Keycloak 26.8 Server Administration Guide—WebAuthn and Passkeys](https://www.keycloak.org/docs/26.8.0/server_admin/#webauthn_server_administration_guide), [Keycloak 26.4 release notes—Passkeys integration](https://www.keycloak.org/2025/09/keycloak-2640-released), [W3C WebAuthn Level 3](https://www.w3.org/TR/2026/REC-webauthn-3-20260825/)
+
+A built-in Keycloak flow can:
+
+1. create a Keycloak user via realm self-registration (or let an administrator/API create the user);
+2. require the **WebAuthn Register Passwordless** required action, either by making it a default action for new users or assigning it as part of account bootstrap; and
+3. allow that user to sign in using WebAuthn Passwordless/Passkey through Keycloak’s configured browser flow and passkey login UI (conditional autofill or an explicit/modal sign-in, depending on configuration and browser support).
+
+The ordinary self-registration flow and passwordless credential enrollment are separate configuration points. By default, Keycloak documents a new user completing registration and first login before a default WebAuthn Register action runs. For a wallet-first flow, a relying application or custom Keycloak flow/provider must first verify the wallet and create or link the Keycloak user, then assign/complete the passwordless registration action before granting the target session. The built-in action/AIA `kc_action=webauthn-register-passwordless` can also initiate credential registration for an already authenticated account. Do not assume the stock Keycloak registration form itself performs the decent-identity proof. [Keycloak 26.8 self-registration and WebAuthn registration/passwordless documentation](https://www.keycloak.org/docs/26.8.0/server_admin/)
+
+**Finding:** yes, the overall user journey can be composed with Keycloak’s supported Passkey features, but **not with `decent-identity` alone**. `decent-identity` is presently a public-key-binding lookup/publication service. It does not create Keycloak users, authenticate browser sessions, enroll WebAuthn credentials, or establish the Keycloak-user ↔ identity-subject link. A wallet verifier/bootstrap bridge must verify the existing fresh proof, select/link the Keycloak account, and then hand enrollment to Keycloak.
+
+#### Ed25519 algorithm compatibility is not credential compatibility
+
+The current `decent-identity` binding uses an Ed25519 public key and a proof-of-possession signature. Keycloak 26.8’s WebAuthn policy UI exposes `Ed25519` as an offered signature algorithm; its WebAuthn registration implementation maps that name to COSE EdDSA algorithm `-8`. The upstream change is [Keycloak PR #27108](https://github.com/keycloak/keycloak/pull/27108) (merged for Keycloak 24.0); in 26.8, the default WebAuthn policy remains ES256 and RS256, so Ed25519 must be explicitly configured. [26.8 policy UI source](https://github.com/keycloak/keycloak/blob/26.8.0/js/apps/admin-ui/src/authentication/policies/WebauthnPolicy.tsx), [26.8 registration source](https://github.com/keycloak/keycloak/blob/26.8.0/services/src/main/java/org/keycloak/authentication/requiredactions/WebAuthnRegister.java), [26.8 `WebAuthnPolicy` defaults](https://github.com/keycloak/keycloak/blob/26.8.0/server-spi/src/main/java/org/keycloak/models/WebAuthnPolicy.java)
+
+The W3C WebAuthn Level 3 Recommendation defines COSE `-8` as EdDSA with Ed25519 curve 6. It recommends that Relying Parties wishing broad authenticator compatibility offer EdDSA, ES256, and RS256; each individual browser/authenticator/passkey provider may support only a subset. Keycloak’s algorithm choice therefore makes Ed25519 a valid negotiation option, not a guarantee every user’s platform Passkey can use it. Keep common algorithms such as ES256 available unless the deployment’s supported-authenticator matrix proves Ed25519-only operation. [W3C WebAuthn Level 3 §5.8.5](https://www.w3.org/TR/2026/REC-webauthn-3-20260825/#sctn-cryptographic-algorithm-identifier-typedef-cosealgorithmidentifier), [Keycloak WebAuthn policy](https://www.keycloak.org/docs/26.8.0/server_admin/)
+
+Even when both sides use Ed25519, the **existing decent-identity keypair is not automatically a Passkey credential**. WebAuthn registration is a ceremony in which the authenticator creates a credential keypair in response to the RP’s challenge and RP ID, returns its credential ID/public key/attestation response to the RP, and retains/binds the credential private key to that authenticator and RP scope. Later authentication signs a WebAuthn assertion transcript (including the fresh WebAuthn challenge and RP/origin-bound authenticator/client data), not an arbitrary decent-identity challenge message. The specification expects the credential private key to remain under authenticator control and not be exposed to another party. [W3C WebAuthn Level 3—registration and authenticator model](https://www.w3.org/TR/2026/REC-webauthn-3-20260825/#sctn-registering-a-new-credential), [credential key pair definition](https://www.w3.org/TR/2026/REC-webauthn-3-20260825/#credential-key-pair), [credential private key definition](https://www.w3.org/TR/2026/REC-webauthn-3-20260825/#credential-private-key)
+
+Therefore, repurposing/importing the existing Identity key into a platform’s Passkey store is neither the normal WebAuthn enrollment flow nor a conformant portability path. It would also reuse one globally meaningful Identity key across RP scopes, conflicting with WebAuthn’s RP-specific credential scoping and privacy goals. “Ed25519 is a supported WebAuthn algorithm” means a WebAuthn authenticator may generate a new Ed25519 WebAuthn credential; it does not mean Keycloak can enroll or use the pre-existing decent-identity signing key directly.
+
+#### Minimal compatible architecture options
+
+- **Separate RP-scoped Passkey (minimal and standards-aligned):** Keep the existing decent-identity Ed25519 key for wallet proof and Identity Record ownership. Use that proof to bootstrap/link the Keycloak account. Then have the browser/OS/security key create a fresh Passkey credential for Keycloak’s RP ID; Keycloak stores/verifies its credential public key and ID. Link the Keycloak user to the verified Identity subject in a narrowly scoped mapping. The Identity key and Passkey key are cryptographically separate; no identity-key migration is needed.
+- **Wallet implements a WebAuthn authenticator:** If the product requires the user’s wallet to be the authenticator, the wallet must implement the WebAuthn authenticator side and perform registration/authentication ceremonies for the Keycloak RP ID. It should create a separate RP-scoped credential key, return valid WebAuthn registration/assertion data, and protect that private key as the authenticator’s credential. This is not achieved merely by signing the existing Identity challenge. Browser/platform integration and supported transports become a new wallet capability.
+- **Multiple Identity keys (only if ecosystem discovery requires it):** Current `decent-identity` models one latest Ed25519 key binding per identifier, not a set of concurrently active, purpose-scoped/RP-scoped credentials. If passkey credential keys must themselves be discoverable through Identity, the Identity schema/API and Registry authorization rules need a versioned multikey/key-purpose model (and explicit RP scoping). Otherwise leave Passkey credential public keys in Keycloak and store only the verified subject-to-Keycloak account mapping in the integration layer.
+
+**Lifecycle question for the later architecture decision:** after a Keycloak Passkey is enrolled, changing/revoking the current `decent-identity` key does not automatically revoke Keycloak’s separately stored Passkey. The system must decide whether this link is durable unless the owner explicitly recovers/removes it, whether administrative/wallet unlinking is supported, or whether the bridge must re-check Identity status at selected login/recovery boundaries. Requiring live Identity resolution on every Passkey assertion would need custom Keycloak flow/integration and would couple otherwise standard Passkey login to Identity/Registry availability. Do not silently equate Keycloak Passkey enrollment with enduring proof that the current Identity key remains active.
+
+**Finding:** the least disruptive design is wallet-authenticated account bootstrap plus a **separate Keycloak RP-scoped Passkey**. The existing key can be used to prove/link the person during bootstrap, and Ed25519 is available as a configurable WebAuthn algorithm, but using that same pre-existing key *as* the Passkey is not the stock or conformant design.
+
+
 ## Options comparison (facts and trade-offs, not a selection)
 
 | Route | Can it accept the present wallet challenge? | Keycloak-specific code? | Main compatibility/support issue | Main boundary concern |
-|---|---|---|---|---|
 | Configure an ordinary OIDC broker | No, not without a separate OIDC wallet-verifier/issuer | No Keycloak code if that issuer already exists | Interop is standard OIDC; adapter/verifier itself must be designed, hosted, maintained | Keep verifier as authenticator and do not treat `decent-identity` lookup as login |
 | Custom Authenticator provider | Yes, it is designed to add a Keycloak login-flow step, subject to implementation | Yes, provider JAR; no core fork initially | Authenticator SPI expressly internal/unstable; rebuild/test across versions | Binding challenge, callback, replay storage, Identity resolution and principal mapping correctly |
 | Custom Identity Provider provider | Potentially, as a custom broker integration, subject to implementation | Yes, provider JAR | API exists, but stability must be validated; full broker/linking flow complexity | External subject/account linking must be tied to current Identity without silent alias normalization |
@@ -123,6 +160,13 @@ Acceptance must establish: fresh per-transaction challenge; exact current Identi
 5. Whether token exchange based on RFC 7523 is acceptable after a wallet challenge, or whether the auth protocol should remain non-JWT and use a separate verifier-to-Keycloak bridge.
 6. Whether the shared authorization artifact is Keycloak-issued OAuth/JWT, opaque token, or another resource-side capability; that’s in #31 and the later human decision tickets.
 7. Whether the same wallet flow belongs in Keycloak for WordPress and storage, or only a Keycloak test/production AS profile. Keycloak-specific integration must not become a prerequisite for every `decent-auth` consumer.
+8. How a wallet-authenticated new Keycloak account is created/linked without making the `decent-identity` lookup service an account, session, or authorization authority.
+9. Whether Passwordless account bootstrap should use a Keycloak local password, an upstream wallet authenticator/IdP, an application-mediated first session, or another onboarding factor before assigning `WebAuthn Register Passwordless`.
+10. Whether Keycloak’s 26.8 supported EdDSA credential option works across the actual browser/platform/passkey set targeted by the ecosystem. The WebAuthn spec supports EdDSA, but algorithm availability must be validated on each supported user environment.
+11. Whether a Keycloak Passkey is an independent credential linked to the decentralized identity for the relationship’s lifetime, or whether its use must be conditioned on current `decent-identity` key status. Rotation/revocation, lost-wallet recovery, Passkey removal, account unlinking and recovery ceremony policy are unresolved.
+12. Whether `decent-identity` stays single-key by definition, or whether a future ecosystem design calls for versioned, purpose-scoped additional key bindings. A WebAuthn Passkey private key should remain authenticator-held; direct publication/import of the platform authenticator key is not assumed.
+13. What stable opaque subject/user handle binds the current Identity record to a Keycloak user without leaking raw human-readable identifiers or allowing identifier reuse/account takeover.
+14. How to test end-to-end registration and authentication: origin/RP ID, challenge freshness/replay, account matching, credential replacement/removal, session issuance, and support matrices for synced/device-bound Passkeys and Ed25519 vs ES256 algorithms.
 
 ## Sources checked (official/primary)
 
@@ -135,6 +179,14 @@ Acceptance must establish: fresh per-transaction challenge; exact current Identi
 - [Keycloak Release Notes 26.8.0](https://www.keycloak.org/docs/26.8.0/release_notes/) — JWT Authorization Grant supported since 26.6, custom OAuth grant SPI classified as internal in 26.8, OID4VP remains experimental in 26.8.
 - [Keycloak OIDC endpoint guide](https://www.keycloak.org/securing-apps/oidc-layers) — standard discovery, JWKS/certificates, introspection and revocation.
 - [Keycloak Supported Configurations](https://www.keycloak.org/server/supported-configurations) — container/runtime/JDK deployment constraints.
+- [Keycloak Server Administration Guide 26.8.0](https://www.keycloak.org/docs/26.8.0/server_admin/) — realm self-registration, WebAuthn/Passkey policies and required actions, credential registration/login flows, RP ID, algorithms, conditional/modal UI and loginless/passkey semantics.
+- [Keycloak 26.4 release notes—Passkeys integration](https://www.keycloak.org/2025/09/keycloak-2640-released) — supported Passkeys integration.
+- [Keycloak WebAuthn policy UI at tag 26.8.0](https://github.com/keycloak/keycloak/blob/26.8.0/js/apps/admin-ui/src/authentication/policies/WebauthnPolicy.tsx) — accepted policy label `Ed25519`.
+- [Keycloak WebAuthn registration implementation at tag 26.8.0](https://github.com/keycloak/keycloak/blob/26.8.0/services/src/main/java/org/keycloak/authentication/requiredactions/WebAuthnRegister.java) — `Ed25519` to COSE EdDSA `-8` mapping.
+- [Keycloak `WebAuthnPolicy` defaults at tag 26.8.0](https://github.com/keycloak/keycloak/blob/26.8.0/server-spi/src/main/java/org/keycloak/models/WebAuthnPolicy.java) — default algorithms ES256 and RS256.
+- [Keycloak PR #27108](https://github.com/keycloak/keycloak/pull/27108) — upstream WebAuthn Ed25519 policy/conversion support, merged in Keycloak 24.0.
+- [W3C WebAuthn Level 3 Recommendation (2026-08-25)](https://www.w3.org/TR/2026/REC-webauthn-3-20260825/) — RP-scoped credentials, authenticator-generated credential keypair, user-consent ceremony, credential private-key handling, and COSE EdDSA/Ed25519 definition.
+- [`decent-identity` CONTEXT.md](https://github.com/jetpen/decent-identity/blob/main/CONTEXT.md) and [README](https://github.com/jetpen/decent-identity/blob/main/README.md) — current exact-match single Ed25519 identity-binding model and CLI lookup/publication scope.
 - Ecosystem primary decisions: [authentication challenge #11](https://github.com/jetpen/decent-ecosystem/issues/11), [scope/trust boundary #36](https://github.com/jetpen/decent-ecosystem/issues/36), [standards research #31](https://github.com/jetpen/decent-ecosystem/issues/31), and [parent map #29](https://github.com/jetpen/decent-ecosystem/issues/29).
 
 ---
