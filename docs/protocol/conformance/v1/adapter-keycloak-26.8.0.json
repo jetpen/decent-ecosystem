@@ -1,0 +1,81 @@
+{
+  "profile_id": "decent-storage-grant-keycloak-26.8.0-v1",
+  "profile_version": 1,
+  "status": "illustrative-mapping-not-qualified-against-canonical-jcs-v1",
+  "claims": {
+    "assertion": {
+      "jti": "grant-01JTEST000000000000000000",
+      "iss": "https://wallet.example.test/issuer",
+      "sub": "mailto:alice@example.org",
+      "aud": "https://keycloak.example.test/realms/decent",
+      "iat": 1900000000,
+      "exp": 1900000060,
+      "decent_grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      }
+    },
+    "access_token_required": {
+      "sub": "mailto:alice@example.org",
+      "aud": "https://storage.example.test/instance/alpha",
+      "iss": "https://keycloak.example.test/realms/decent",
+      "storage_aud": "https://storage.example.test/instance/alpha",
+      "owner_identifier": "mailto:alice@example.org",
+      "owner_key_fingerprint": "SYNTHETIC_UNQUALIFIED_NOT-A-REAL-FINGERPRINT",
+      "identity_registry_seq": 1,
+      "storage_object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "storage_actions": [
+        "read",
+        "update"
+      ],
+      "storage_purpose": "profile-update",
+      "wallet_grant_jti": "grant-01JTEST000000000000000000",
+      "wallet_consent_exp": 1900000050,
+      "exp": 1900000050
+    },
+    "access_token_forbidden": [
+      "refresh_token"
+    ],
+    "must_not_assert": [
+      "rfc9068",
+      "future_keycloak_compatibility",
+      "global_replay_guarantee",
+      "production_storage_implementation",
+      "production_mtls_lifecycle"
+    ]
+  },
+  "observed_claim_names_are_not_provider_neutral": true,
+  "assertion_audience_role": "authorization-server",
+  "access_token_audience_role": "exact-storage-resource",
+  "signing": {
+    "algorithm": "EdDSA",
+    "jws_serialization": "compact",
+    "wallet_signature_input": "RFC 7515 JWS Compact Signing Input over exact protected-header and payload base64url segments",
+    "grant_jti_equals_assertion_jti": true
+  },
+  "test_scope": {
+    "keycloak_version": "26.8.0",
+    "successor_release_qualification": "excluded-unavailable-not-tested",
+    "forward_compatibility": "not-claimed",
+    "source_revision": "18d98b3dfb09fc84f68e3c028754f75d61d62942",
+    "registry_revision": "0fa9a6b631bd77725418e990ae9ea4d974dc546c",
+    "identity_revision": "2caec24de52c2dbe241e72fe317281c051d03f89",
+    "mandatory_cases": 41,
+    "passed": 41,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "adapter_fixture_status": "schematic-mapping-only; no real signed JCS-envelope token artifact has been run",
+    "current_adapter_qualification": "not-qualified-until-real-keycloak-positive-negative-suite-runs"
+  }
+}
