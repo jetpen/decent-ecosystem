@@ -1,0 +1,11 @@
+{
+  "wire_version": 1,
+  "owner_identifier": "mailto:alice@example.org",
+  "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+  "storage_aud": "https://storage.example.test/instance/alpha",
+  "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "actions": [],
+  "purpose": "profile-update",
+  "grant_jti": "grant-01JTEST000000000000000000",
+  "consent_exp": 1900000050
+}

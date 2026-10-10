@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:decent:protocol:storage-grant:semantic:v1",
+  "title": "Decent Owner-Authorized Storage Grant Semantic Envelope v1",
+  "description": "Provider-neutral semantic representation. The Keycloak 26.8.0 adapter embeds this object as the RFC 7523 assertion's decent_grant claim; this schema alone does not define an OAuth assertion or issuer profile.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["wire_version", "owner_identifier", "owner_public_key", "storage_aud", "object_digest", "actions", "purpose", "grant_jti", "consent_exp"],
+  "properties": {
+    "wire_version": {"const": 1},
+    "owner_identifier": {"type": "string", "minLength": 1, "maxLength": 512, "description": "Exact raw UTF-8 identifier; no normalization or alias expansion."},
+    "owner_public_key": {"$ref": "#/$defs/ed25519PublicKey"},
+    "storage_aud": {"type": "string", "minLength": 1, "maxLength": 512, "description": "Operator-configured Storage resource identifier, compared exactly."},
+    "object_digest": {"$ref": "#/$defs/storageDigest"},
+    "actions": {"type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 32}},
+    "purpose": {"type": "string", "minLength": 1, "maxLength": 128, "description": "Opaque exact value; v1 defines no global purpose vocabulary."},
+    "grant_jti": {"type": "string", "minLength": 1, "maxLength": 256},
+    "consent_exp": {"type": "integer", "minimum": 1, "maximum": 9007199254740991, "description": "Unix epoch seconds, within IEEE-754 safe-integer range."},
+    "extensions": {"$ref": "#/$defs/extensions"}
+  },
+  "$defs": {
+    "ed25519PublicKey": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "32-byte Ed25519 public key in lowercase hex."},
+    "storageDigest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$", "description": "Existing Storage Object's exact-content SHA-256 digest."},
+    "extensions": {
+      "type": "object",
+      "maxProperties": 16,
+      "additionalProperties": {"type": ["string", "boolean", "integer"]},
+      "propertyNames": {"pattern": "^[a-z0-9][a-z0-9.-]*:[a-z0-9][a-z0-9._-]*$"},
+      "description": "Optional namespaced primitive metadata only. V1 consumers ignore all extension values; they MUST NOT carry or widen authorization."
+    }
+  }
+}

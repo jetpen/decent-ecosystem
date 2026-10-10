@@ -1,0 +1,552 @@
+{
+  "wire_version": 1,
+  "profile_id": "decent-storage-grant-semantics-v1",
+  "adapter_profile": "decent-storage-grant-keycloak-26.8.0-v1",
+  "canonicalization": "RFC 8785 JSON Canonicalization Scheme over semantic JSON values, UTF-8 bytes",
+  "signed_transport": "RFC 7515 JWS Compact Serialization over exact protected-header and payload segments; RFC 7523 JWT Authorization Grant adapter-specific envelope",
+  "supported_wire_versions": [
+    1
+  ],
+  "rules": [
+    "RFC 7523 input assertion aud targets AS; storage_aud identifies Storage resource.",
+    "grant_jti equals signed assertion JWT jti for Keycloak 26.8.0 adapter.",
+    "wallet grant signature is the single EdDSA JWS signature over the RFC 7515 JWS signing input; no separate detached signature.",
+    "assertion exp and output access-token exp do not exceed consent_exp.",
+    "one-use jti; uncertain token exchange requires fresh wallet authorization.",
+    "actions and purpose are exact opaque strings; no universal vocabulary or URI normalization.",
+    "extensions are namespaced and non-authorizing."
+  ],
+  "valid": [
+    {
+      "file": "fixtures/valid-grant.json",
+      "expected": "accept"
+    },
+    {
+      "file": "fixtures/valid-grant-noncanonical.json",
+      "expected": "parse-equivalent-but-canonical-bytes-required-for-vector"
+    }
+  ],
+  "invalid": [
+    {
+      "file": "fixtures/invalid/unsupported-wire-version.json",
+      "expected": "schema-invalid"
+    },
+    {
+      "file": "fixtures/invalid/empty-actions.json",
+      "expected": "schema-invalid"
+    },
+    {
+      "file": "fixtures/invalid/duplicate-actions.json",
+      "expected": "schema-invalid"
+    },
+    {
+      "file": "fixtures/invalid/empty-purpose.json",
+      "expected": "schema-invalid"
+    },
+    {
+      "file": "fixtures/invalid/bad-digest.json",
+      "expected": "schema-invalid"
+    },
+    {
+      "file": "fixtures/invalid/extra-core-field.json",
+      "expected": "schema-invalid"
+    },
+    {
+      "file": "fixtures/invalid/unsafe-time.json",
+      "expected": "schema-invalid"
+    }
+  ],
+  "invalid_semantic": [
+    {
+      "file": "fixtures/invalid/duplicate-member.json",
+      "expected": "duplicate-json-member"
+    }
+  ],
+  "unsupported": [
+    {
+      "file": "fixtures/invalid/unsupported-wire-version.json",
+      "expected": "unsupported-wire-version"
+    }
+  ],
+  "duplicate_member": [
+    {
+      "file": "fixtures/invalid/duplicate-member.json",
+      "expected": "reject"
+    }
+  ],
+  "canonicality": [
+    {
+      "file": "fixtures/valid-grant.jcs.json",
+      "expected": "canonical"
+    },
+    {
+      "file": "fixtures/valid-grant-noncanonical.json",
+      "expected": "noncanonical-but-same-json"
+    }
+  ],
+  "semantic_vectors": [
+    {
+      "id": "positive-existing-object",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "accept",
+      "reason": "Well-formed signed envelope with explicit existing-object consent scope."
+    },
+    {
+      "id": "exact-subject-case-change",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:Alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "reject-at-adapter",
+      "reason": "Identifier comparison is exact and case is not normalized; local subject must match linked identity.",
+      "adapter_context": {
+        "linked_local_subject": "mailto:alice@example.org"
+      }
+    },
+    {
+      "id": "different-storage-resource",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/beta",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "reject-at-adapter",
+      "reason": "Grant audience must equal the single configured Storage resource.",
+      "adapter_context": {
+        "allowlisted_storage_audiences": [
+          "https://storage.example.test/instance/alpha"
+        ]
+      }
+    },
+    {
+      "id": "different-existing-object-digest",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "resource-policy-deny",
+      "reason": "The token may encode the separately consented digest, but it must not authorize a request for another digest.",
+      "use_context": {
+        "requested_object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "requested_action": "read",
+        "requested_purpose": "profile-update"
+      }
+    },
+    {
+      "id": "reduced-action-subset",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "accept",
+      "reason": "A grant may authorize a smaller explicit action set; adapter must not widen beyond it."
+    },
+    {
+      "id": "explicit-delete-scope",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "delete"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "accept",
+      "reason": "Action strings are opaque and exact; whether a Storage route implements delete is component policy."
+    },
+    {
+      "id": "create-is-not-entitled-by-existing-object-profile",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "resource-policy-deny",
+      "reason": "This existing-object grant does not authorize create; creation requires separate authorization.",
+      "use_context": {
+        "requested_operation": "create",
+        "existing_object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "id": "purpose-whitespace-change",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update ",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "resource-policy-deny",
+      "reason": "Purpose comparison is exact; the request purpose differs.",
+      "use_context": {
+        "requested_purpose": "profile-update"
+      }
+    },
+    {
+      "id": "different-jti-from-assertion",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-other",
+        "consent_exp": 1900000050
+      },
+      "expected": "reject-at-adapter",
+      "reason": "Keycloak adapter requires grant_jti equal assertion JWT jti.",
+      "adapter_context": {
+        "assertion_jti": "grant-other"
+      }
+    },
+    {
+      "id": "consent-outlives-assertion",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000070
+      },
+      "expected": "reject-at-adapter",
+      "reason": "Reject consent expiry after signed assertion exp.",
+      "adapter_context": {
+        "assertion_exp": 1900000040
+      }
+    },
+    {
+      "id": "consent-shorter-than-assertion",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000030
+      },
+      "expected": "accept",
+      "reason": "Assertion may be valid longer than consent only if output token expires at consent ceiling."
+    },
+    {
+      "id": "namespaced-nonauthorizing-extension",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050,
+        "extensions": {
+          "example.test:display": "Friendly label"
+        }
+      },
+      "expected": "accept",
+      "reason": "V1 ignores namespaced extension values for authority and preserves authorization claims."
+    },
+    {
+      "id": "extension-cannot-widen-scope",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050,
+        "extensions": {
+          "example.test:extra-action": "delete"
+        }
+      },
+      "expected": "accept",
+      "reason": "Namespaced extension data is ignored by v1 and must not widen the core action set.",
+      "output_invariant": {
+        "storage_actions_must_equal": [
+          "read",
+          "update"
+        ],
+        "extension_values_authorize_nothing": true
+      }
+    },
+    {
+      "id": "rotated-owner-key-requires-current-registry-resolution",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "reject-at-adapter",
+      "reason": "Wrong/stale key rejects; a valid Registry predecessor-authorized rotation is accepted only with the freshly resolved successor.",
+      "adapter_context": {
+        "current_registry_key": "2222222222222222222222222222222222222222222222222222222222222222"
+      }
+    },
+    {
+      "id": "output-token-exp-ceiling",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000051
+      },
+      "expected": "reject-at-adapter",
+      "reason": "Adapter must not issue an output access token with exp later than consent_exp.",
+      "adapter_context": {
+        "candidate_output_exp": 1900000051
+      }
+    },
+    {
+      "id": "duplicate-action",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update",
+          "read"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "schema-invalid",
+      "reason": "Malformed semantic envelope; reject against the v1 schema before adapter token exchange."
+    },
+    {
+      "id": "audience-case-change",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://STORAGE.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "reject-at-adapter",
+      "reason": "Storage resource identifiers compare exact configured strings.",
+      "adapter_context": {
+        "allowlisted_storage_audiences": [
+          "https://storage.example.test/instance/alpha"
+        ]
+      }
+    },
+    {
+      "id": "nonpositive-consent-exp",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 0
+      },
+      "expected": "schema-invalid",
+      "reason": "Malformed semantic envelope; reject against the v1 schema before adapter token exchange."
+    },
+    {
+      "id": "unqualified-extension-key",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050,
+        "extensions": {
+          "bad key": "x"
+        }
+      },
+      "expected": "schema-invalid",
+      "reason": "Malformed semantic envelope; reject against the v1 schema before adapter token exchange."
+    }
+  ],
+  "required_vector_ids": [
+    "positive-existing-object",
+    "exact-subject-case-change",
+    "different-storage-resource",
+    "different-existing-object-digest",
+    "reduced-action-subset",
+    "explicit-delete-scope",
+    "create-is-not-entitled-by-existing-object-profile",
+    "purpose-whitespace-change",
+    "different-jti-from-assertion",
+    "consent-outlives-assertion",
+    "consent-shorter-than-assertion",
+    "namespaced-nonauthorizing-extension",
+    "extension-cannot-widen-scope",
+    "rotated-owner-key-requires-current-registry-resolution",
+    "output-token-exp-ceiling",
+    "duplicate-action",
+    "audience-case-change",
+    "nonpositive-consent-exp",
+    "unqualified-extension-key"
+  ],
+  "adapter_qualification": {
+    "keycloak_26_8_0": "unqualified-for-canonical-JCS-v1; prior #17 41-case run covered prior regular-JWT fixture only; run real positive/negative adapter suite before qualification",
+    "wordPress_consumer": "not-run",
+    "storage_consumer": "not-run",
+    "aggregate_receipt": "not-issued",
+    "rfc9068": "not-claimed",
+    "successor_keycloak": "excluded-unavailable-not-tested",
+    "forward_compatibility": "not-claimed",
+    "adapter_fixture_artifact": "schematic-unqualified-no-real-signed-token"
+  },
+  "canonical_sha256": {
+    "file": "fixtures/valid-grant.jcs.json",
+    "sha256": "90df5dab8b9eb7d849194585fe2dc9dcd5ae7d4aa44f8181ac93862afdbc6778"
+  },
+  "adapter_rejection_vector_ids": [
+    "exact-subject-case-change",
+    "different-storage-resource",
+    "different-jti-from-assertion",
+    "consent-outlives-assertion",
+    "output-token-exp-ceiling",
+    "audience-case-change",
+    "rotated-owner-key-requires-current-registry-resolution"
+  ],
+  "resource_policy_vector_ids": [
+    "different-existing-object-digest",
+    "create-is-not-entitled-by-existing-object-profile",
+    "purpose-whitespace-change"
+  ]
+}
