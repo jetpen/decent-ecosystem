@@ -1,6 +1,6 @@
 # V1 grant semantic and adapter conformance fixtures
 
-Status: **Canonical provider-neutral semantic envelope, schema and offline vectors authored and statically verified.** They are an intermediate deliverable for [Wayfinder #35](https://github.com/jetpen/decent-ecosystem/issues/35). Keycloak 26.8.0 adapter requalification against this new JCS envelope, WordPress consumer suite, Storage consumer suite, and aggregate cross-repository receipt are **not run/not qualified**; do not claim #35 complete.
+Status: **User-directed stage-1 draft for review; not an adopted or released protocol.** The provider-neutral semantic envelope, schema and offline vectors are statically verified. This is an intermediate deliverable for [Wayfinder #35](https://github.com/jetpen/decent-ecosystem/issues/35). Keycloak 26.8.0 adapter requalification against this new JCS envelope, WordPress consumer suite, Storage consumer suite, and aggregate cross-repository receipt are **not run/not qualified**; do not claim #35 complete.
 
 ## Package
 

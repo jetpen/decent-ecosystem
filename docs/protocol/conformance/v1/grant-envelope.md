@@ -1,6 +1,6 @@
 # Owner-authorized Storage grant semantic envelope v1
 
-**Status:** approved semantic/vector profile in progress under [Wayfinder #35](https://github.com/jetpen/decent-ecosystem/issues/35). This file is provider-neutral semantics plus a versioned fixture; it is not a general OAuth AS wire profile and does not claim every RFC 7523 provider supports it.
+**Status:** User-directed stage-1 draft for review under [Wayfinder #35](https://github.com/jetpen/decent-ecosystem/issues/35). It is not an adopted/released protocol. This file defines provider-neutral semantics plus a versioned fixture; it is not a general OAuth AS wire profile and does not claim every RFC 7523 provider supports it.
 
 ## Signed object and canonical bytes
 

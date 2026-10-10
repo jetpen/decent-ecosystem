@@ -65,6 +65,7 @@
   },
   "test_scope": {
     "keycloak_version": "26.8.0",
+    "prior_prototype_report_scope": "regular-JWT fixture only; does not qualify canonical JCS payload adapter",
     "successor_release_qualification": "excluded-unavailable-not-tested",
     "forward_compatibility": "not-claimed",
     "source_revision": "18d98b3dfb09fc84f68e3c028754f75d61d62942",
