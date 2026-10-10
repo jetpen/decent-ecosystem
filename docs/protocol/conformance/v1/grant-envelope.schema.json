@@ -26,7 +26,7 @@
       "maxProperties": 16,
       "additionalProperties": {"type": ["string", "boolean", "integer"]},
       "propertyNames": {"pattern": "^[a-z0-9][a-z0-9.-]*:[a-z0-9][a-z0-9._-]*$"},
-      "description": "Optional namespaced primitive metadata only. V1 consumers ignore all extension values; they MUST NOT carry or widen authorization." 
+      "description": "Optional namespaced primitive metadata only. V1 consumers ignore all extension values; they MUST NOT carry or widen authorization."
     }
   }
 }
