@@ -13,17 +13,18 @@ validator=Draft202012Validator(schema)
 adapter=json.loads((ROOT/'adapter-keycloak-26.8.0.json').read_text(encoding='utf-8'))
 REQUIRED_VECTOR_IDS = [
   'positive-existing-object', 'exact-subject-case-change', 'different-storage-resource',
+  'assertion-sub-mismatch',
   'different-existing-object-digest', 'reduced-action-subset', 'explicit-delete-scope',
   'create-is-not-entitled-by-existing-object-profile', 'purpose-whitespace-change',
   'different-jti-from-assertion', 'consent-outlives-assertion', 'consent-shorter-than-assertion',
   'namespaced-nonauthorizing-extension', 'extension-cannot-widen-scope',
-  'rotated-owner-key-requires-current-registry-resolution', 'output-token-exp-ceiling',
+  'rotated-owner-key-requires-current-registry-resolution', 'consent-expiry-rejected-at-adapter',
   'duplicate-action', 'audience-case-change', 'nonpositive-consent-exp', 'unqualified-extension-key',
 ]
 REQUIRED_ADAPTER_REJECTION_IDS = [
-  'exact-subject-case-change', 'different-storage-resource',
+  'exact-subject-case-change', 'different-storage-resource', 'assertion-sub-mismatch',
   'different-jti-from-assertion', 'consent-outlives-assertion',
-  'output-token-exp-ceiling', 'audience-case-change',
+  'consent-expiry-rejected-at-adapter', 'audience-case-change',
   'rotated-owner-key-requires-current-registry-resolution',
 ]
 REQUIRED_RESOURCE_POLICY_IDS = [
@@ -49,7 +50,24 @@ def load_strict(path):
   return json.loads(path.read_text(encoding='utf-8'), object_pairs_hook=pairs_no_duplicates,
                     parse_constant=lambda x: (_ for _ in ()).throw(ValueError(f'non-JSON numeric constant {x}')))
 
-envelope=adapter['claims']['assertion']['decent_grant']
+payload_path=ROOT/'fixtures/assertion-payload.json'
+payload_text=payload_path.read_text(encoding='utf-8')
+payload=load_strict(payload_path)
+marker='"decent_grant": '
+check(payload_text.count(marker)==1, 'assertion payload fixture must contain one decent_grant member')
+value_start=payload_text.index(marker)+len(marker)
+embedded_grant, value_end=json.JSONDecoder().raw_decode(payload_text, value_start)
+envelope=payload['decent_grant']
+check(envelope==adapter['claims']['assertion']['decent_grant'], 'assertion payload grant differs from adapter fixture')
+check(payload_text[value_start:value_end].encode('utf-8')==rfc8785.dumps(embedded_grant), 'embedded decent_grant bytes are not JCS canonical')
+check(payload['sub']==envelope['owner_identifier'], 'assertion sub must exactly equal owner_identifier')
+check(payload['jti']==envelope['grant_jti'], 'assertion jti must exactly equal grant_jti')
+verification=adapter['verification_context']
+check(verification['resolved_owner_identifier']==payload['sub'], 'Registry key must be resolved for the exact assertion subject')
+check(verification['current_registry_owner_public_key']==envelope['owner_public_key'], 'owner_public_key must equal current Registry key used for JWS verification')
+check(verification['fixture_key_binding_matches'] is True, 'illustrative Registry key binding fixture must be consistent')
+check(verification['live_signature_verification'] == 'not-run', 'fixture must not imply a live JWS signature verification')
+
 errors=list(validator.iter_errors(envelope))
 check(not errors, f'valid grant envelope rejected: {errors[0].message if errors else ""}')
 canonical=rfc8785.dumps(envelope)
@@ -69,6 +87,8 @@ check(adapter['test_scope']['passed']==adapter['test_scope']['mandatory_cases'],
 check(adapter['test_scope']['failed']==adapter['test_scope']['errors']==adapter['test_scope']['skipped']==0, 'recorded adapter evidence contains failures/errors/skips')
 
 manifest=load_strict(ROOT/'manifest.json')
+subject_vector=next(v for v in manifest['semantic_vectors'] if v['id']=='assertion-sub-mismatch')
+check(subject_vector['adapter_context']['assertion_sub'] != subject_vector['grant']['owner_identifier'], 'subject-mismatch vector must use different assertion and owner identifiers')
 for case in manifest['valid']:
   obj=load_strict(ROOT/case['file'])
   errs=list(validator.iter_errors(obj))
@@ -113,6 +133,15 @@ for vector in manifest['semantic_vectors']:
   else:
     check(not errs,f"semantic vector {vector['id']} is invalid: {errs[0].message if errs else ''}")
   check(vector.get('reason'),f"semantic vector {vector['id']} missing reason")
+
+# Adapter-context vectors must actually exercise their stated rejection condition.
+by_id={vector['id']:vector for vector in manifest['semantic_vectors']}
+jti_vector=by_id['different-jti-from-assertion']
+check(jti_vector['adapter_context']['assertion_jti'] != jti_vector['grant']['grant_jti'], 'different-jti vector must use unequal assertion and grant JTIs')
+key_vector=by_id['rotated-owner-key-requires-current-registry-resolution']
+check(key_vector['adapter_context']['current_registry_key'] != key_vector['grant']['owner_public_key'], 'stale-key vector must use a key different from current Registry key')
+expiry_vector=by_id['consent-expiry-rejected-at-adapter']
+check(expiry_vector['adapter_context']['candidate_output_exp'] > expiry_vector['grant']['consent_exp'], 'output-expiry vector must exceed consent ceiling')
 for expected_id in REQUIRED_ADAPTER_REJECTION_IDS:
   check(expected_id in ids and next(v for v in manifest['semantic_vectors'] if v['id']==expected_id)['expected']=='reject-at-adapter',f"adapter rejection vector {expected_id} missing or misclassified")
 for expected_id in REQUIRED_RESOURCE_POLICY_IDS:

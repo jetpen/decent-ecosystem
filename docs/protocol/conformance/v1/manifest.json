@@ -1,20 +1,28 @@
 {
   "wire_version": 1,
   "profile_id": "decent-storage-grant-semantics-v1",
+  "profile_status": "adopted-by-user-as-normative-decent-storage-grant-semantic-v1",
   "adapter_profile": "decent-storage-grant-keycloak-26.8.0-v1",
-  "canonicalization": "RFC 8785 JSON Canonicalization Scheme over semantic JSON values, UTF-8 bytes",
+  "adapter_status": "not-qualified-against-canonical-jcs-v1",
+  "canonicalization": "RFC 8785 JSON Canonicalization Scheme over the decent_grant semantic object only; UTF-8 bytes embedded as the claim value in the normally serialized outer JWT claims object",
   "signed_transport": "RFC 7515 JWS Compact Serialization over exact protected-header and payload segments; RFC 7523 JWT Authorization Grant adapter-specific envelope",
   "supported_wire_versions": [
     1
   ],
   "rules": [
+    "RFC 7523 JWT grant requires iss, sub, aud, and exp; it permits iat and jti.",
+    "decent_grant is a project-profile claim; RFC 7523 does not define its semantics or guarantee generic AS support.",
+    "JCS applies to decent_grant only; the outer JWT claims object is normally serialized and its exact bytes are JWS-signed.",
+    "owner_identifier exactly equals RFC 7523 assertion sub; owner_public_key equals the current Registry-resolved key used to verify the JWS.",
     "RFC 7523 input assertion aud targets AS; storage_aud identifies Storage resource.",
     "grant_jti equals signed assertion JWT jti for Keycloak 26.8.0 adapter.",
     "wallet grant signature is the single EdDSA JWS signature over the RFC 7515 JWS signing input; no separate detached signature.",
     "assertion exp and output access-token exp do not exceed consent_exp.",
     "one-use jti; uncertain token exchange requires fresh wallet authorization.",
     "actions and purpose are exact opaque strings; no universal vocabulary or URI normalization.",
-    "extensions are namespaced and non-authorizing."
+    "extensions are namespaced and non-authorizing.",
+    "identity binding mismatch rejects before adapter issuance; no subject/alias inference.",
+    "unknown core fields reject; v1 extensions are ignored for authority; unsupported consumer actions deny."
   ],
   "valid": [
     {
@@ -151,6 +159,28 @@
       }
     },
     {
+      "id": "assertion-sub-mismatch",
+      "grant": {
+        "wire_version": 1,
+        "owner_identifier": "mailto:alice@example.org",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+        "storage_aud": "https://storage.example.test/instance/alpha",
+        "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actions": [
+          "read",
+          "update"
+        ],
+        "purpose": "profile-update",
+        "grant_jti": "grant-01JTEST000000000000000000",
+        "consent_exp": 1900000050
+      },
+      "expected": "reject-at-adapter",
+      "reason": "Assertion sub must exactly equal the owner identifier in the signed semantic grant.",
+      "adapter_context": {
+        "assertion_sub": "mailto:mallory@example.org"
+      }
+    },
+    {
       "id": "different-existing-object-digest",
       "grant": {
         "wire_version": 1,
@@ -275,7 +305,7 @@
       "expected": "reject-at-adapter",
       "reason": "Keycloak adapter requires grant_jti equal assertion JWT jti.",
       "adapter_context": {
-        "assertion_jti": "grant-other"
+        "assertion_jti": "grant-01JTEST000000000000000000"
       }
     },
     {
@@ -375,7 +405,7 @@
       "grant": {
         "wire_version": 1,
         "owner_identifier": "mailto:alice@example.org",
-        "owner_public_key": "2222222222222222222222222222222222222222222222222222222222222222",
+        "owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
         "storage_aud": "https://storage.example.test/instance/alpha",
         "object_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "actions": [
@@ -393,7 +423,7 @@
       }
     },
     {
-      "id": "output-token-exp-ceiling",
+      "id": "consent-expiry-rejected-at-adapter",
       "grant": {
         "wire_version": 1,
         "owner_identifier": "mailto:alice@example.org",
@@ -411,7 +441,7 @@
       "expected": "reject-at-adapter",
       "reason": "Adapter must not issue an output access token with exp later than consent_exp.",
       "adapter_context": {
-        "candidate_output_exp": 1900000051
+        "candidate_output_exp": 1900000052
       }
     },
     {
@@ -504,6 +534,7 @@
     "positive-existing-object",
     "exact-subject-case-change",
     "different-storage-resource",
+    "assertion-sub-mismatch",
     "different-existing-object-digest",
     "reduced-action-subset",
     "explicit-delete-scope",
@@ -515,7 +546,7 @@
     "namespaced-nonauthorizing-extension",
     "extension-cannot-widen-scope",
     "rotated-owner-key-requires-current-registry-resolution",
-    "output-token-exp-ceiling",
+    "consent-expiry-rejected-at-adapter",
     "duplicate-action",
     "audience-case-change",
     "nonpositive-consent-exp",
@@ -529,7 +560,9 @@
     "rfc9068": "not-claimed",
     "successor_keycloak": "excluded-unavailable-not-tested",
     "forward_compatibility": "not-claimed",
-    "adapter_fixture_artifact": "schematic-unqualified-no-real-signed-token"
+    "adapter_fixture_artifact": "schematic-unqualified-no-real-signed-token",
+    "assertion_payload_fixture": "unsigned-illustrative-not-JWS; JCS-applies-to-decent_grant-only",
+    "assertion_sub_mismatch_vector": "required-reject-at-adapter"
   },
   "canonical_sha256": {
     "file": "fixtures/valid-grant.jcs.json",
@@ -538,9 +571,10 @@
   "adapter_rejection_vector_ids": [
     "exact-subject-case-change",
     "different-storage-resource",
+    "assertion-sub-mismatch",
     "different-jti-from-assertion",
     "consent-outlives-assertion",
-    "output-token-exp-ceiling",
+    "consent-expiry-rejected-at-adapter",
     "audience-case-change",
     "rotated-owner-key-requires-current-registry-resolution"
   ],

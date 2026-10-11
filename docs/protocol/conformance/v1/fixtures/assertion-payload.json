@@ -1,0 +1,9 @@
+{
+  "iss": "https://wallet.example.test/issuer",
+  "sub": "mailto:alice@example.org",
+  "aud": "https://keycloak.example.test/realms/decent",
+  "iat": 1900000000,
+  "exp": 1900000060,
+  "jti": "grant-01JTEST000000000000000000",
+  "decent_grant": {"actions":["read","update"],"consent_exp":1900000050,"grant_jti":"grant-01JTEST000000000000000000","object_digest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","owner_identifier":"mailto:alice@example.org","owner_public_key":"1111111111111111111111111111111111111111111111111111111111111111","purpose":"profile-update","storage_aud":"https://storage.example.test/instance/alpha","wire_version":1}
+}
