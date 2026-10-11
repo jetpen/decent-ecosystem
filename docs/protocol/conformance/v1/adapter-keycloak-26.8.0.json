@@ -78,5 +78,11 @@
     "skipped": 0,
     "adapter_fixture_status": "schematic-mapping-only; no real signed JCS-envelope token artifact has been run",
     "current_adapter_qualification": "not-qualified-until-real-keycloak-positive-negative-suite-runs"
+  },
+  "verification_context": {
+    "resolved_owner_identifier": "mailto:alice@example.org",
+    "current_registry_owner_public_key": "1111111111111111111111111111111111111111111111111111111111111111",
+    "fixture_key_binding_matches": true,
+    "live_signature_verification": "not-run"
   }
 }
