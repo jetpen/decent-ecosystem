@@ -9,6 +9,11 @@ The user's private key paired with its public key and associated information tha
 
 _Avoid_: account, profile, `decent-identity` service
 
+**Identity Owner Key (Owner Key)**:
+The user's wallet-controlled asymmetric key pair used to prove control of an Identity and sign owner-authorized statements. Its public key is bound to the exact Identity identifier by the current validated Registry Record; its private key remains in the Wallet. In the wallet-login and wallet-account-disclosure v1 profiles, this is an Ed25519 key pair. An Owner-Key signature proves control of that key, not independent verification of the user's account/profile claims. This key is distinct from wallet-container encryption keys, RP signing keys, and Keycloak signing keys.
+
+_Avoid_: wallet encryption key, RP signing key, Keycloak signing key, third-party attestation
+
 **Account**:
 User-owned information associated with a particular website and selectively disclosed by the user. A website may maintain its own proprietary representation of that user's account; that site-owned representation is opaque to this ecosystem and is distinct from the user-owned account information.
 
@@ -20,7 +25,7 @@ Additional user-owned data beyond the properties of the user's identity and acco
 _Avoid_: identity properties, account properties, website-owned profile
 
 **Wallet**:
-A user-controlled component that generates, holds, and strictly protects the user's private-key and public-key pair; accepts authentication challenges; responds to them; signs user-authorized Registry updates; participates in threshold approval through independent multisignature signing; and acts as the user's consent agent for disclosure and selected threshold-approved operations. Signer wallets retain their own secrets, and only finalized threshold-approved material is submitted to the Registry. Its authoritative retained data is limited to key material and local signing, approval, and authorization state; account/profile entities remain external user-owned data. Wallet initialization includes an owner setup step that establishes a password-derived symmetric encryption key for securely storing wallet contents. The password and derived key remain local to wallet protection and are never displayed, logged, transmitted, or otherwise disclosed; the private key is never exposed outside the wallet. The wallet is distinct from the user's identity, account, profile, and registry records.
+A user-controlled component that generates, holds, and strictly protects the user's private-key and public-key pair; accepts authentication challenges; responds to them; signs user-authorized Registry updates; participates in threshold approval through independent multisignature signing; and acts as the user's consent agent for disclosure and selected threshold-approved operations. Signer wallets retain their own secrets, and only finalized threshold-approved material is submitted to the Registry. Its authoritative retained data includes key material, local signing, approval, authorization state, and the wallet-local Master Account Entity. Site-specific Account Entities may be delegated to an External Storage Provider only through separate explicit user authorization; the Master Account Entity remains local. Wallet initialization includes an owner setup step that establishes a password-derived symmetric encryption key for securely storing wallet contents. The password and derived key remain local to wallet protection and are never displayed, logged, transmitted, or otherwise disclosed; the private key is never exposed outside the wallet. The wallet is distinct from the user's identity, account, profile, and registry records.
 
 _Avoid_: identity, account, profile, registry, consent authority for site policy
 
@@ -111,7 +116,7 @@ The conceptual role of `decent-identity` and `decent-registry`: identity-binding
 _Avoid_: policy authority, account owner, consent authority
 
 **Site relationship**:
-The relationship between a user's user-owned account information and a particular participating site, including the site's opaque account representation and associated sessions. Deactivation ends or refuses this relationship without deleting the user's identity, wallet, or unrelated site relationships.
+The relationship between a user's user-owned account information and a particular participating site, including the site's opaque account representation and associated sessions. Each site MUST declare its signup policy as open or closed. Open signup permits creation of a new Keycloak principal and site account from a wallet-local Identity only when the exact Identity is not already present in Keycloak. Closed signup also creates an account from a previously absent Identity, but the site MUST withhold access until a site administrator approves that account. When an enabled exact Keycloak principal already exists but the site has no local account for it, the user may use the distinct `signup_recovery` action with fresh wallet proof to create that site account without creating another Keycloak principal; disabled principals remain blocked. The site's open/closed policy still determines whether administrator approval is required before access. Deactivation ends or refuses this relationship without deleting the user's identity, wallet, or unrelated site relationships.
 
 _Avoid_: global identity deactivation, identity deletion, ecosystem-wide account
 
@@ -121,11 +126,11 @@ A user-owned, site-specific entity containing account/profile information, setti
 _Avoid_: registry record, public profile, arbitrary application content, site-owned account
 
 **Master Account Entity**:
-A user-owned, cross-site JSON entity stored through an External Storage Provider for reusable account/profile information, preferences, and selectively disclosable data. The owner may later edit it through an authorized storage operation. A participating site may receive selected fields from it during onboarding, but the entity remains user-owned and distinct from each site's opaque account representation and from site-specific Account Entities; edits do not automatically propagate to site-specific accounts.
+A user-owned, cross-site JSON entity held only in the authenticated encrypted wallet-container. It contains reusable account/profile information, preferences, and selectively disclosable data. It is not uploaded, replicated, or stored by an External Storage Provider because that provider does not ensure the privacy required for this sensitive cross-site entity. A participating site may receive selected fields only through an explicit wallet-approved disclosure. The Master Account Entity remains distinct from each site's opaque account representation and from site-specific Account Entities; edits do not automatically propagate to site-specific accounts.
 
-_Avoid_: global public profile, site-owned account, Registry Record, unrestricted disclosure
+_Avoid_: global public profile, site-owned account, Registry Record, external-storage object, unrestricted disclosure
 
 **External Storage Provider**:
-A separate component that accepts, retains, retrieves, and updates user-owned account entities as a delegated custodian. It enforces presented capabilities but does not own the entities, issue or broaden consent, interpret site policy, or become the authority for user disclosure. `decent-simple-storage` is the provisional MVP component for this role.
+A separate component that accepts, retains, retrieves, and updates site-specific user-owned Account Entities as a delegated custodian. It enforces presented capabilities but does not own the entities, issue or broaden consent, interpret site policy, or become the authority for user disclosure. It MUST NOT store the wallet-local Master Account Entity. `decent-simple-storage` is the provisional MVP component for site-specific Account Entities.
 
 _Avoid_: registry backend, identity authority, data owner, consent authority
