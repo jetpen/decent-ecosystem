@@ -1,6 +1,6 @@
 # Decent Wallet Account Disclosure v1
 
-**Status:** Adopted as a normative v1 profile by the protocol owner. Requirements in this document are normative. The profile is associated with [ecosystem issue #51](https://github.com/jetpen/decent-ecosystem/issues/51), which remains open for publication and component qualification; this local package has not yet been committed or merged.
+**Status:** Adopted as a normative v1 profile by the protocol owner. Requirements in this document are normative. The package is committed on [PR #52](https://github.com/jetpen/decent-ecosystem/pull/52) but not yet merged; [ecosystem issue #51](https://github.com/jetpen/decent-ecosystem/issues/51) remains open for merge and component qualification.
 
 ## 1. Scope and trust boundaries
 

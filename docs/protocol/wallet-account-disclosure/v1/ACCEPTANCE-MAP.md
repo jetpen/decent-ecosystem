@@ -1,6 +1,6 @@
 # Issue #51 acceptance map — adopted normative profile
 
-The protocol owner has adopted the profile as normative. The local package remains uncommitted/unmerged; the issue stays `OPEN` until the adopted artifacts are published and component qualification and independent human security/privacy review are recorded. A check mark in the issue is not implied by this table.
+The protocol owner has adopted the profile as normative. The package is committed on [PR #52](https://github.com/jetpen/decent-ecosystem/pull/52) but not yet merged; issue #51 remains `OPEN` until merge, component qualification, and independent human security/privacy review are recorded. A check mark in the issue is not implied by this table.
 
 | Live issue acceptance criterion | Ecosystem-owned artifact / current result | Remaining evidence or decision |
 |---|---|---|
@@ -22,6 +22,6 @@ The protocol owner has adopted the profile as normative. The local package remai
 - Each RP declares open or closed signup. Open permits account creation without administrator approval; closed accounts remain pending and inaccessible until site-administrator approval.
 - Request/presentation/binding lifetimes are bounded to 300 seconds; `direct_post` completion uses a single-use 256-bit code with 60-second expiry.
 
-The local-only Master Account Entity boundary and existing-principal signup rule align with the adopted architecture. The open/closed signup policy and fresh-proof recovery action are part of the adopted profile and are reflected in the live issue. Keep it open until the adopted package is published, consumer tests pass, and independent human review evidence is recorded.
+The local-only Master Account Entity boundary and existing-principal signup rule align with the adopted architecture. The open/closed signup policy and fresh-proof recovery action are part of the adopted profile and are reflected in the live issue. Keep it open until the adopted package is merged, consumer tests pass, and independent human review evidence is recorded.
 
 **Recovery conformance gate:** Keycloak/RP implementations must prove recovery succeeds only for a fresh, exact wallet proof of an existing Keycloak principal with no RP-local account; it must fail without disclosure for a missing/ambiguous/disabled principal or an already-existing RP account. No consumer test has run yet.

@@ -1,6 +1,6 @@
 # Wallet Account Disclosure v1 — ecosystem package
 
-**Status:** Adopted as the normative v1 profile by the protocol owner. The live [ecosystem issue #51](https://github.com/jetpen/decent-ecosystem/issues/51) remains open for publication and component qualification. This local package is not yet committed or merged.
+**Status:** Adopted as the normative v1 profile by the protocol owner. The profile is committed on [PR #52](https://github.com/jetpen/decent-ecosystem/pull/52) but not yet merged. The live [ecosystem issue #51](https://github.com/jetpen/decent-ecosystem/issues/51) remains open for merge and component qualification.
 
 - [`PROFILE.md`](PROFILE.md): adopted normative profile, wire contract, lifecycle and account-state rules.
 - [`schemas/profile.schema.json`](schemas/profile.schema.json): JSON Schema 2020-12 definitions for account request/context, Owner-Key binding, OID4VP Request Object/DCQL, direct-post response, self-issued credential and holder-bound VP.
