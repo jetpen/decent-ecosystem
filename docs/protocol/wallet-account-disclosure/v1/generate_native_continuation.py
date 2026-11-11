@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Generate unadopted offline fixtures using PUBLIC TEST-ONLY signing material.
+"""Generate normative native-continuation fixtures with PUBLIC TEST-ONLY keys.
 
 The EC scalar 1 and Ed25519 seed bytes(range(32)) are intentionally public.
 RSA keys are fresh throwaway test keys; only public keys/signatures are emitted.
-Every signed case is regenerated together; existing proposal output is never read.
+Every signed case is regenerated together; prior output is never read.
 No environment, credentials, network, or machine-specific paths are used.
 """
 from __future__ import annotations
@@ -25,7 +25,7 @@ from cryptography.x509.oid import NameOID
 ROOT = Path(__file__).resolve().parent
 PROFILE = 'decent-account-disclosure-v1'
 COMMIT = 'b861b8c7a088dd21c79e064c8dbb52a0e0e96eb8'
-VECTOR_SET = PROFILE + '-native-continuation-proposal-1'
+VECTOR_SET = PROFILE + '-native-continuation-1'
 # Public deterministic test source, distinct from the adopted OID4VP nonce.
 OIDC_NONCE_BYTES = bytes(range(64, 96))
 
@@ -351,13 +351,13 @@ def generate():
   signed('binding-future-skew-boundary', {'binding': [patch('iat', now + 60)]}, 'accept', True)
   signed('request-lifetime-300-boundary', {'request': [patch('iat', 1800000240 - 300), patch('exp', 1800000240)]}, 'accept', True)
   signed('binding-lifetime-300-boundary', {'binding': [patch('iat', 1800000240 - 300)]}, 'accept', True)
-  return {'vector_set': VECTOR_SET, 'source_profile_commit': COMMIT, 'status': 'proposal-not-adopted',
+  return {'vector_set': VECTOR_SET, 'source_profile_commit': COMMIT, 'status': 'adopted-normative-v1',
     'test_only': True, 'positive': positive, 'positive_cases': positives, 'negative': negatives}
 
 
 def main():
   document = generate()
-  target = ROOT / 'vectors/continuation_vectors.proposal.json'
+  target = ROOT / 'vectors/continuation_vectors.native.json'
   target.write_text(json.dumps(document, indent=2, ensure_ascii=False) + '\n')
   print(f"Generated {1 + len(document['positive_cases'])} positives and {len(document['negative'])} negatives: {target}")
 
