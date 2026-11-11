@@ -1,0 +1,1169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://decent.example/protocol/wallet-account-disclosure/v1/native-continuation-proposal.schema.json",
+  "title": "Unadopted native continuation amendment proposal schemas",
+  "$defs": {
+    "nativeAccountRequest": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "const": "decent-account-disclosure-v1"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{22}$"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "claims": {
+          "$ref": "#/$defs/claims"
+        },
+        "decent_native_continuation": {
+          "const": true
+        }
+      },
+      "required": [
+        "profile",
+        "request_id",
+        "purpose",
+        "claims",
+        "decent_native_continuation"
+      ],
+      "additionalProperties": false
+    },
+    "claims": {
+      "$ref": "https://decent.example/protocol/wallet-account-disclosure/v1/profile.schema.json#/$defs/claims"
+    },
+    "nativeContext": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "const": "decent-account-disclosure-v1"
+        },
+        "keycloak_issuer": {
+          "type": "string",
+          "format": "uri"
+        },
+        "rp_client_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rp_display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "rp_origin": {
+          "type": "string",
+          "format": "uri"
+        },
+        "action": {
+          "enum": [
+            "signup",
+            "signup_recovery"
+          ]
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{22}$"
+        },
+        "transaction_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "oidc_nonce": {
+          "type": "string",
+          "minLength": 22,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "claims": {
+          "$ref": "#/$defs/claims"
+        },
+        "expires_at": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "profile",
+        "keycloak_issuer",
+        "rp_client_id",
+        "rp_display_name",
+        "rp_origin",
+        "action",
+        "request_id",
+        "transaction_id",
+        "oidc_nonce",
+        "purpose",
+        "claims",
+        "expires_at"
+      ],
+      "additionalProperties": false
+    },
+    "nativeBinding": {
+      "type": "object",
+      "properties": {
+        "v": {
+          "const": 1
+        },
+        "iss": {
+          "type": "string",
+          "format": "uri"
+        },
+        "aud": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sub": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identity_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner_key": {
+          "$ref": "https://decent.example/protocol/wallet-account-disclosure/v1/profile.schema.json#/$defs/ownerJwk"
+        },
+        "owner_key_thumbprint": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "action": {
+          "enum": [
+            "signup",
+            "signup_recovery"
+          ]
+        },
+        "transaction_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{22}$"
+        },
+        "oidc_nonce": {
+          "type": "string",
+          "minLength": 22,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "continuation_capability_hash": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "iat": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "exp": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "jti": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        }
+      },
+      "required": [
+        "v",
+        "iss",
+        "aud",
+        "sub",
+        "identity_id",
+        "owner_key",
+        "owner_key_thumbprint",
+        "action",
+        "transaction_id",
+        "request_id",
+        "oidc_nonce",
+        "continuation_capability_hash",
+        "iat",
+        "exp",
+        "jti"
+      ],
+      "additionalProperties": false
+    },
+    "nativeCapabilityResponse": {
+      "type": "object",
+      "properties": {
+        "http_status": {
+          "const": 200
+        },
+        "content_type": {
+          "const": "application/json"
+        },
+        "cache_control": {
+          "const": "no-store"
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "profile": {
+              "const": "decent-account-disclosure-v1"
+            },
+            "decent_account_continuation_capability": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            },
+            "expires_at": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "profile",
+            "decent_account_continuation_capability",
+            "expires_at"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "http_status",
+        "content_type",
+        "cache_control",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "nativeIdTokenClaims": {
+      "type": "object",
+      "properties": {
+        "decent_account_continuation_capability": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "decent_account_continuation_expires_at": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "decent_account_continuation_capability",
+        "decent_account_continuation_expires_at"
+      ],
+      "additionalProperties": false
+    },
+    "pollPending": {
+      "type": "object",
+      "properties": {
+        "http_status": {
+          "const": 202
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "retry-after": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            },
+            "cache-control": {
+              "const": "no-store"
+            },
+            "referrer-policy": {
+              "const": "no-referrer"
+            }
+          },
+          "required": [
+            "retry-after",
+            "cache-control",
+            "referrer-policy"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "maxProperties": 0
+        }
+      },
+      "required": [
+        "http_status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "pollReady": {
+      "type": "object",
+      "properties": {
+        "http_status": {
+          "const": 200
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "cache-control": {
+              "const": "no-store"
+            },
+            "referrer-policy": {
+              "const": "no-referrer"
+            },
+            "content-type": {
+              "const": "application/json"
+            }
+          },
+          "required": [
+            "cache-control",
+            "referrer-policy",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "$ref": "#/$defs/outerAuthorizationParameters"
+        }
+      },
+      "required": [
+        "http_status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "outerAuthorizationParameters": {
+      "type": "object",
+      "properties": {
+        "client_id": {
+          "type": "string",
+          "pattern": "^x509_san_dns:[a-z0-9.-]+$"
+        },
+        "request_uri": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "client_id",
+        "request_uri"
+      ],
+      "additionalProperties": false
+    },
+    "nativeVector": {
+      "type": "object",
+      "properties": {
+        "vector_set": {
+          "const": "decent-account-disclosure-v1-native-continuation-proposal-1"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "const": "positive"
+        },
+        "base_vector": {
+          "const": "valid-signup.json"
+        },
+        "validation_time": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "account_request": {
+          "$ref": "#/$defs/nativeAccountRequest"
+        },
+        "context": {
+          "$ref": "#/$defs/nativeContextOptedIn"
+        },
+        "capability_response": {
+          "$ref": "#/$defs/nativeCapabilityResponse"
+        },
+        "id_token_claims": {
+          "$ref": "#/$defs/nativeIdTokenClaims"
+        },
+        "binding": {
+          "$ref": "#/$defs/nativeBinding"
+        },
+        "poll_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "poll_authorization": {
+          "type": "string",
+          "pattern": "^Bearer [A-Za-z0-9_-]{43}$"
+        },
+        "poll_pending": {
+          "$ref": "#/$defs/pollPending"
+        },
+        "poll_ready": {
+          "$ref": "#/$defs/pollReady"
+        },
+        "outer_authorization_parameters": {
+          "$ref": "#/$defs/outerAuthorizationParameters"
+        },
+        "request_uri_jws": {
+          "type": "string",
+          "minLength": 1
+        },
+        "request_uri_response": {
+          "$ref": "#/$defs/requestUriResponse"
+        },
+        "poll_http": {
+          "type": "integer"
+        },
+        "retry_after": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "request_bytes_retrieved": {
+          "const": true
+        },
+        "request_bytes_repeat_identically": {
+          "const": true
+        },
+        "direct_post_acceptance": {
+          "$ref": "#/$defs/directPostAcceptance"
+        },
+        "request_uri_jti_state_nonce_reused": {
+          "const": true
+        },
+        "registered_client": {
+          "type": "object",
+          "properties": {
+            "client_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "confidential": {
+              "const": true
+            },
+            "native_continuation_enabled": {
+              "const": true
+            }
+          },
+          "required": [
+            "client_id",
+            "confidential",
+            "native_continuation_enabled"
+          ],
+          "additionalProperties": false
+        },
+        "capability_bytes_test_only": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "capability_sha256_b64url": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "capability_expires_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "capability_storage": {
+          "type": "object",
+          "properties": {
+            "keycloak_durable_value": {
+              "const": "sha256-only"
+            },
+            "raw_keycloak_value": {
+              "const": "private-authentication-session-note-until-id-token-issuance"
+            },
+            "raw_rp_value": {
+              "const": "transient-until-hash-verified-then-discarded"
+            },
+            "raw_wallet_value": {
+              "const": "authenticated-encrypted-pending-approval-only"
+            },
+            "rp_durable_value": {
+              "const": "sha256-only-with-transaction-binding-expiry-and-continuation-state"
+            }
+          },
+          "required": [
+            "keycloak_durable_value",
+            "raw_keycloak_value",
+            "raw_rp_value",
+            "raw_wallet_value",
+            "rp_durable_value"
+          ],
+          "additionalProperties": false
+        },
+        "oidc_callback": {
+          "type": "object",
+          "properties": {
+            "response_mode": {
+              "const": "form_post"
+            },
+            "server_side_confidential_client": {
+              "const": true
+            },
+            "validated_before_poll_ready": {
+              "const": true
+            },
+            "id_token_or_capability_exposed_to_browser": {
+              "const": false
+            },
+            "clean_same_origin_redirect_after_processing": {
+              "const": true
+            }
+          },
+          "required": [
+            "response_mode",
+            "server_side_confidential_client",
+            "validated_before_poll_ready",
+            "id_token_or_capability_exposed_to_browser",
+            "clean_same_origin_redirect_after_processing"
+          ],
+          "additionalProperties": false
+        },
+        "failure": {
+          "type": "object",
+          "properties": {
+            "uncertain_keycloak_acceptance_write": {
+              "const": "no-code-no-capability-fresh-login"
+            },
+            "no-browser-fallback": {
+              "const": true
+            },
+            "lost_wallet_post_response": {
+              "const": "fresh-end-to-end-transaction-new-proof-approval-existing-action-preconditions-fail-closed-if-principal-changed"
+            }
+          },
+          "required": [
+            "uncertain_keycloak_acceptance_write",
+            "no-browser-fallback",
+            "lost_wallet_post_response"
+          ],
+          "additionalProperties": false
+        },
+        "keycloak_auth_post": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "native"
+            },
+            "origin": {
+              "type": "null"
+            },
+            "sec_fetch_site": {
+              "type": "null"
+            },
+            "sec_fetch_mode": {
+              "type": "null"
+            },
+            "sec_fetch_dest": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "kind",
+            "origin",
+            "sec_fetch_site",
+            "sec_fetch_mode",
+            "sec_fetch_dest"
+          ],
+          "additionalProperties": false
+        },
+        "browser_post_rejection": {
+          "type": "object",
+          "properties": {
+            "http_status": {
+              "const": 403
+            },
+            "body": {
+              "type": "object",
+              "maxProperties": 0
+            },
+            "cache_control": {
+              "const": "no-store"
+            },
+            "proof_consumed": {
+              "const": false
+            }
+          },
+          "required": [
+            "http_status",
+            "body",
+            "cache_control",
+            "proof_consumed"
+          ],
+          "additionalProperties": false
+        },
+        "accepted_proof_retry": {
+          "type": "object",
+          "properties": {
+            "http_status": {
+              "const": 202
+            },
+            "body": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "const": "accepted"
+                }
+              },
+              "required": [
+                "status"
+              ],
+              "additionalProperties": false
+            },
+            "capability_returned": {
+              "const": false
+            }
+          },
+          "required": [
+            "http_status",
+            "body",
+            "capability_returned"
+          ],
+          "additionalProperties": false
+        },
+        "poll_terminal": {
+          "type": "object",
+          "properties": {
+            "http_status": {
+              "const": 410
+            },
+            "headers": {
+              "type": "object",
+              "properties": {
+                "cache-control": {
+                  "const": "no-store"
+                },
+                "referrer-policy": {
+                  "const": "no-referrer"
+                }
+              },
+              "required": [
+                "cache-control",
+                "referrer-policy"
+              ],
+              "additionalProperties": false
+            },
+            "body": {
+              "type": "object",
+              "maxProperties": 0
+            }
+          },
+          "required": [
+            "http_status",
+            "headers",
+            "body"
+          ],
+          "additionalProperties": false
+        },
+        "poll_unknown": {
+          "type": "object",
+          "properties": {
+            "http_status": {
+              "const": 404
+            },
+            "headers": {
+              "type": "object",
+              "properties": {
+                "cache-control": {
+                  "const": "no-store"
+                },
+                "referrer-policy": {
+                  "const": "no-referrer"
+                }
+              },
+              "required": [
+                "cache-control",
+                "referrer-policy"
+              ],
+              "additionalProperties": false
+            },
+            "body": {
+              "type": "object",
+              "maxProperties": 0
+            }
+          },
+          "required": [
+            "http_status",
+            "headers",
+            "body"
+          ],
+          "additionalProperties": false
+        },
+        "bundle": {
+          "$ref": "#/$defs/bundle"
+        },
+        "expected": {
+          "const": "accept"
+        },
+        "source_profile_commit": {
+          "const": "b861b8c7a088dd21c79e064c8dbb52a0e0e96eb8"
+        },
+        "test_only": {
+          "const": true
+        },
+        "request_uri_retry_response": {
+          "$ref": "#/$defs/requestUriResponse"
+        },
+        "request_object_expires_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "proof_accepted_at": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "vector_set",
+        "id",
+        "kind",
+        "base_vector",
+        "validation_time",
+        "account_request",
+        "context",
+        "capability_response",
+        "id_token_claims",
+        "binding",
+        "poll_url",
+        "poll_authorization",
+        "poll_pending",
+        "poll_ready",
+        "outer_authorization_parameters",
+        "request_uri_jws",
+        "request_uri_response",
+        "poll_http",
+        "retry_after",
+        "request_bytes_retrieved",
+        "request_bytes_repeat_identically",
+        "direct_post_acceptance",
+        "request_uri_jti_state_nonce_reused",
+        "registered_client",
+        "capability_bytes_test_only",
+        "capability_sha256_b64url",
+        "capability_expires_at",
+        "capability_storage",
+        "oidc_callback",
+        "failure",
+        "keycloak_auth_post",
+        "browser_post_rejection",
+        "accepted_proof_retry",
+        "poll_terminal",
+        "poll_unknown",
+        "bundle",
+        "expected",
+        "source_profile_commit",
+        "test_only",
+        "request_uri_retry_response",
+        "request_object_expires_at",
+        "proof_accepted_at"
+      ],
+      "additionalProperties": false
+    },
+    "directPostAcceptance": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^/oid4vp/response$"
+        },
+        "state": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{22}$"
+        },
+        "vp_token": {
+          "type": "string",
+          "minLength": 1
+        },
+        "atomic_acceptance_revokes_capability": {
+          "const": true
+        },
+        "subsequent_poll_http": {
+          "const": 410
+        },
+        "identical_presentation_retry": {
+          "const": "existing-profile-byte-identical-retry-only"
+        }
+      },
+      "required": [
+        "path",
+        "state",
+        "vp_token",
+        "atomic_acceptance_revokes_capability",
+        "subsequent_poll_http",
+        "identical_presentation_retry"
+      ],
+      "additionalProperties": false
+    },
+    "bundle": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "const": "decent-account-disclosure-v1"
+        },
+        "test_only": {
+          "const": true
+        },
+        "validation_time": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "transaction_handle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "oidc_callback_validated": {
+          "const": true
+        },
+        "rp_client_id_jwk": {
+          "type": "object"
+        },
+        "keycloak_jwks": {
+          "type": "object"
+        },
+        "owner_jwk": {
+          "type": "object"
+        },
+        "rp_certificate": {
+          "type": "object"
+        },
+        "initial_oidc_request_jws": {
+          "type": "string",
+          "minLength": 1
+        },
+        "keycloak_context": {
+          "$ref": "#/$defs/nativeContextOptedIn"
+        },
+        "id_token_jws": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner_key_binding_jws": {
+          "type": "string",
+          "minLength": 1
+        },
+        "oid4vp_client_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "oid4vp_request_uri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "oid4vp_authorization_parameters": {
+          "$ref": "#/$defs/outerAuthorizationParameters"
+        },
+        "oid4vp_request_jws": {
+          "type": "string",
+          "minLength": 1
+        },
+        "wallet_approved_claim_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "presentation_jws": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected": {
+          "const": "accept"
+        },
+        "direct_post_response": {
+          "type": "object"
+        },
+        "direct_post_reply": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "profile",
+        "test_only",
+        "validation_time",
+        "transaction_handle",
+        "oidc_callback_validated",
+        "rp_client_id_jwk",
+        "keycloak_jwks",
+        "owner_jwk",
+        "rp_certificate",
+        "initial_oidc_request_jws",
+        "keycloak_context",
+        "id_token_jws",
+        "owner_key_binding_jws",
+        "oid4vp_client_id",
+        "oid4vp_request_uri",
+        "oid4vp_authorization_parameters",
+        "oid4vp_request_jws",
+        "wallet_approved_claim_ids",
+        "presentation_jws",
+        "expected",
+        "direct_post_response",
+        "direct_post_reply"
+      ],
+      "additionalProperties": false
+    },
+    "nativeNegative": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "patches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/patch"
+          },
+          "minItems": 1
+        },
+        "expected": {
+          "enum": [
+            "schema-reject",
+            "context-request-binding",
+            "capability-response-expiry",
+            "binding-capability-hash",
+            "id-token-capability-claim",
+            "poll-authorization",
+            "poll-pending",
+            "poll-ready",
+            "request-uri-bytes",
+            "request-opt-in-projection",
+            "request-immutability",
+            "context-bundle-projection",
+            "native-oidc-request-policy",
+            "native-oidc-request-audience",
+            "binding-context",
+            "binding-claim-set",
+            "id-token-context",
+            "request-object-expiry",
+            "binding-expiry",
+            "id-token-expiry",
+            "malformed-jws",
+            "invalid-purpose",
+            "unsupported-response-mode",
+            "response-uri-host-mismatch",
+            "request-client-mismatch",
+            "dcql-claim-mismatch",
+            "dcql-claim-sets-mismatch",
+            "request-context-mismatch",
+            "untrusted-rp-certificate",
+            "presentation-nonce-mismatch",
+            "presentation-context-mismatch",
+            "unrequested-claim",
+            "direct-post-response-mismatch",
+            "capability-not-independent",
+            "oidc-oid4vp-nonce-reuse",
+            "capability-sender-artifact-leak"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "patches",
+        "expected"
+      ],
+      "additionalProperties": false
+    },
+    "nativeNegativeList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/nativeNegative"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "nativeContextOptedIn": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "const": "decent-account-disclosure-v1"
+        },
+        "keycloak_issuer": {
+          "type": "string",
+          "format": "uri"
+        },
+        "rp_client_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rp_display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "rp_origin": {
+          "type": "string",
+          "format": "uri"
+        },
+        "action": {
+          "enum": [
+            "signup",
+            "signup_recovery"
+          ]
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{22}$"
+        },
+        "transaction_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "oidc_nonce": {
+          "type": "string",
+          "minLength": 22,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "claims": {
+          "$ref": "#/$defs/claims"
+        },
+        "expires_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "decent_native_continuation": {
+          "const": true
+        }
+      },
+      "required": [
+        "profile",
+        "keycloak_issuer",
+        "rp_client_id",
+        "rp_display_name",
+        "rp_origin",
+        "action",
+        "request_id",
+        "transaction_id",
+        "oidc_nonce",
+        "purpose",
+        "claims",
+        "expires_at",
+        "decent_native_continuation"
+      ],
+      "additionalProperties": false
+    },
+    "requestUriResponse": {
+      "type": "object",
+      "properties": {
+        "http_status": {
+          "const": 200
+        },
+        "content_type": {
+          "const": "application/oauth-authz-req+jwt"
+        },
+        "cache_control": {
+          "const": "no-store"
+        },
+        "referrer_policy": {
+          "const": "no-referrer"
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "http_status",
+        "content_type",
+        "cache_control",
+        "referrer_policy",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "patch": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "integer",
+                "minimum": 0
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "value": {}
+      },
+      "required": [
+        "path",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "nativePositiveCase": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "patches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/patch"
+          },
+          "minItems": 1
+        },
+        "expected": {
+          "const": "accept"
+        }
+      },
+      "required": [
+        "id",
+        "patches",
+        "expected"
+      ],
+      "additionalProperties": false
+    },
+    "nativeDocument": {
+      "type": "object",
+      "properties": {
+        "vector_set": {
+          "const": "decent-account-disclosure-v1-native-continuation-proposal-1"
+        },
+        "source_profile_commit": {
+          "const": "b861b8c7a088dd21c79e064c8dbb52a0e0e96eb8"
+        },
+        "status": {
+          "const": "proposal-not-adopted"
+        },
+        "test_only": {
+          "const": true
+        },
+        "positive": {
+          "$ref": "#/$defs/nativeVector"
+        },
+        "positive_cases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nativePositiveCase"
+          }
+        },
+        "negative": {
+          "$ref": "#/$defs/nativeNegativeList"
+        }
+      },
+      "required": [
+        "vector_set",
+        "source_profile_commit",
+        "status",
+        "test_only",
+        "positive",
+        "positive_cases",
+        "negative"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
