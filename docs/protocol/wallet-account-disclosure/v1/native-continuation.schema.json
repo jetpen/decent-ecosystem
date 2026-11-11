@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://decent.example/protocol/wallet-account-disclosure/v1/native-continuation-proposal.schema.json",
-  "title": "Unadopted native continuation amendment proposal schemas",
+  "$id": "https://decent.example/protocol/wallet-account-disclosure/v1/native-continuation.schema.json",
+  "title": "Decent Wallet Account Disclosure v1 native-continuation schemas",
   "$defs": {
     "nativeAccountRequest": {
       "type": "object",
@@ -353,7 +353,7 @@
       "type": "object",
       "properties": {
         "vector_set": {
-          "const": "decent-account-disclosure-v1-native-continuation-proposal-1"
+          "const": "decent-account-disclosure-v1-native-continuation-1"
         },
         "id": {
           "type": "string",
@@ -1130,13 +1130,13 @@
       "type": "object",
       "properties": {
         "vector_set": {
-          "const": "decent-account-disclosure-v1-native-continuation-proposal-1"
+          "const": "decent-account-disclosure-v1-native-continuation-1"
         },
         "source_profile_commit": {
           "const": "b861b8c7a088dd21c79e064c8dbb52a0e0e96eb8"
         },
         "status": {
-          "const": "proposal-not-adopted"
+          "const": "adopted-normative-v1"
         },
         "test_only": {
           "const": true

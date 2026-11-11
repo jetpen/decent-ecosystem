@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline proposal-only regression harness (stdlib unittest)."""
+"""Offline normative native-continuation regression harness (stdlib unittest)."""
 import copy
 import json
 import os
@@ -17,8 +17,8 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 
 import jsonschema
-import generate_native_continuation_proposal as generator
-import verify_native_continuation_proposal as verifier
+import generate_native_continuation as generator
+import verify_native_continuation as verifier
 
 ROOT = Path(__file__).resolve().parent
 
@@ -37,7 +37,7 @@ def signed_request(vector, member, updates):
 
 class NativeContinuationTests(unittest.TestCase):
   def setUp(self):
-    self.doc = json.loads((ROOT / 'vectors/continuation_vectors.proposal.json').read_text())
+    self.doc = json.loads((ROOT / 'vectors/continuation_vectors.native.json').read_text())
     self.vector = copy.deepcopy(self.doc['positive'])
     self.base = json.loads((ROOT / 'vectors/valid-signup.json').read_text())
 
@@ -106,7 +106,7 @@ class NativeContinuationTests(unittest.TestCase):
           unauthenticated['request_uri_response']['body'] = token
           unauthenticated['request_uri_retry_response']['body'] = token
         self.assertEqual('signature-invalid', verifier.disposition(unauthenticated))
-        with self.assertRaisesRegex(verifier.ProposalError, '^capability-sender-artifact-leak$'):
+        with self.assertRaisesRegex(verifier.NativeContinuationError, '^capability-sender-artifact-leak$'):
           verifier.validate_native(vector)
 
   def test_sender_urls_cannot_embed_capability_with_synced_projections(self):
@@ -140,7 +140,7 @@ class NativeContinuationTests(unittest.TestCase):
       with self.subTest(case=case['id']):
         vector = verifier.apply_patches(self.vector, case['patches'])
         verifier.validate_schema('nativeVector', vector)
-        with self.assertRaisesRegex(verifier.ProposalError, '^capability-sender-artifact-leak$'):
+        with self.assertRaisesRegex(verifier.NativeContinuationError, '^capability-sender-artifact-leak$'):
           verifier.validate_native(vector)
 
   def test_sender_leakage_is_not_trusted_before_signature_verification(self):
@@ -175,7 +175,7 @@ class NativeContinuationTests(unittest.TestCase):
   def test_signed_jar_audience_must_match_issuer(self):
     self.vector['bundle']['initial_oidc_request_jws'] = signed_request(
       self.vector, 'initial_oidc_request_jws', {'aud': 'https://wrong.example.test/realms/site'})
-    with self.assertRaisesRegex(verifier.ProposalError, '^native-oidc-request-audience$'):
+    with self.assertRaisesRegex(verifier.NativeContinuationError, '^native-oidc-request-audience$'):
       verifier.validate_native(self.vector, self.base)
 
   def test_signed_request_requires_direct_post(self):
@@ -184,7 +184,7 @@ class NativeContinuationTests(unittest.TestCase):
     self.vector['request_uri_jws'] = token
     self.vector['request_uri_response']['body'] = token
     self.vector['request_uri_retry_response']['body'] = token
-    with self.assertRaisesRegex(verifier.ProposalError, '^unsupported-response-mode$'):
+    with self.assertRaisesRegex(verifier.NativeContinuationError, '^unsupported-response-mode$'):
       verifier.validate_native(self.vector, self.base)
 
   def test_signed_purpose_cannot_be_whitespace(self):
@@ -195,7 +195,7 @@ class NativeContinuationTests(unittest.TestCase):
     self.vector['account_request'] = jar['decent_account_request']
     self.vector['context']['purpose'] = '   '
     self.vector['bundle']['keycloak_context']['purpose'] = '   '
-    with self.assertRaisesRegex(verifier.ProposalError, '^invalid-purpose$'):
+    with self.assertRaisesRegex(verifier.NativeContinuationError, '^invalid-purpose$'):
       verifier.validate_native(self.vector, self.base)
 
   def test_all_fixture_signatures_and_semantic_prerequisites(self):
@@ -230,7 +230,7 @@ class NativeContinuationTests(unittest.TestCase):
           verifier._ADOPTED_VALIDATE_SCHEMA('accountCredential',
             generator.payload(presentation['vp']['verifiableCredential'][0]))
           if case['expected'] == 'capability-sender-artifact-leak':
-            with self.assertRaisesRegex(verifier.ProposalError, '^capability-sender-artifact-leak$'):
+            with self.assertRaisesRegex(verifier.NativeContinuationError, '^capability-sender-artifact-leak$'):
               verifier.validate_native(vector)
           else:
             self.assertEqual(case['expected'], verifier.disposition(vector))
@@ -297,21 +297,21 @@ class NativeContinuationTests(unittest.TestCase):
     self.assertEqual('request-object-expiry', verifier.disposition(vector))
 
   def test_fresh_generation_is_portable_and_never_retains_stale_cases(self):
-    with tempfile.TemporaryDirectory(prefix='native-proposal-') as temp:
+    with tempfile.TemporaryDirectory(prefix='native-continuation-') as temp:
       root = Path(temp) / 'portable'
       (root / 'vectors').mkdir(parents=True)
       (root / 'schemas').mkdir()
-      for name in ['generate_native_continuation_proposal.py', 'verify_native_continuation_proposal.py',
-                   'verify.py', 'native-continuation.schema.proposal.json', 'schemas/profile.schema.json',
+      for name in ['generate_native_continuation.py', 'verify_native_continuation.py',
+                   'verify.py', 'native-continuation.schema.json', 'schemas/profile.schema.json',
                    'vectors/negative.json']:
         shutil.copyfile(ROOT / name, root / name)
       for source in (ROOT / 'vectors').glob('valid-*.json'):
         shutil.copyfile(source, root / 'vectors' / source.name)
       env = dict(os.environ, PYTHONDONTWRITEBYTECODE='1')
-      output = root / 'vectors/continuation_vectors.proposal.json'
+      output = root / 'vectors/continuation_vectors.native.json'
       output.write_text('{"negative": [{"id": "stale-poison"}]}')
       for iteration in range(2):
-        subprocess.run([sys.executable, str(root / 'generate_native_continuation_proposal.py')],
+        subprocess.run([sys.executable, str(root / 'generate_native_continuation.py')],
           cwd=temp, env=env, check=True, capture_output=True, text=True)
         document = json.loads(output.read_text())
         self.assertEqual({case['id'] for case in self.doc['negative']}, {case['id'] for case in document['negative']})
@@ -319,9 +319,9 @@ class NativeContinuationTests(unittest.TestCase):
         if iteration:
           self.assertNotEqual(previous_key, document['positive']['bundle']['keycloak_jwks'])
         previous_key = document['positive']['bundle']['keycloak_jwks']
-        result = subprocess.run([sys.executable, str(root / 'verify_native_continuation_proposal.py')],
+        result = subprocess.run([sys.executable, str(root / 'verify_native_continuation.py')],
           cwd=temp, env=env, check=True, capture_output=True, text=True)
-        self.assertIn(f"PASS {1 + len(document['positive_cases'])} native proposal positives; rejected {len(document['negative'])}", result.stdout)
+        self.assertIn(f"PASS {1 + len(document['positive_cases'])} native positives; rejected {len(document['negative'])}", result.stdout)
 
   def test_case_document_schema(self):
     verifier.validate_schema('nativeNegativeList', self.doc['negative'])
@@ -350,7 +350,7 @@ class NativeContinuationTests(unittest.TestCase):
         vector = generator.apply(self.vector, case['patches'])
         try:
           verifier.validate_native(vector, self.base)
-        except verifier.ProposalError as exc:
+        except verifier.NativeContinuationError as exc:
           actual = str(exc)
         except jsonschema.ValidationError as exc:
           actual = schema_codes.get(tuple(exc.path), 'schema-reject')

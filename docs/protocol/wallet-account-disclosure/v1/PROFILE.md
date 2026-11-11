@@ -1,6 +1,6 @@
 # Decent Wallet Account Disclosure v1
 
-**Status:** Adopted as a normative v1 profile by the protocol owner. Requirements in this document are normative. The package is committed on [PR #52](https://github.com/jetpen/decent-ecosystem/pull/52) but not yet merged; [ecosystem issue #51](https://github.com/jetpen/decent-ecosystem/issues/51) remains open for merge and component qualification.
+**Status:** Normative v1 profile adopted by the protocol owner. This package includes the adopted native Android continuation amendment. Requirements in this document are normative. Ecosystem issue #51 remains open for component conformance, runtime qualification, and independent human security/privacy review.
 
 ## 1. Scope and trust boundaries
 
@@ -318,17 +318,88 @@ Errors MUST NOT reveal whether a particular Identity ID, claim, email/phone valu
 - A valid owner signature is never represented as external verification. In particular, email and phone values are not verified contact channels.
 - V1 discloses the exact Identity ID as credential/presentation issuer and subject, and exposes a stable Owner-Key thumbprint. Relying parties can correlate presentations across sites; V1 does not provide pairwise identifiers or unlinkability. The Wallet MUST explain this before approval as required by §4.
 
-## 11. Conformance artifacts and qualification boundaries
+## 11. Native Android continuation
 
-The sibling files in this package define the JSON Schemas, a machine-readable vector manifest, cryptographically valid positive fixtures, and negative vectors. `verify.py` checks schema validity, strict duplicate-member handling, canonical JCS bytes, JWS signatures, Keycloak binding relationships, exact claim allowlists, audience/nonce/action/transaction binding, and required rejection cases.
+This section normatively extends the v1 signup and `signup_recovery` flow for a native Android wallet. It does not change the existing `decent-wallet-login-v1` proof, OID4VP credential or presentation bytes, browser-only request/context bytes, account-state rules, or RP trust model. The RP remains trusted to issue a continuation only after successful OIDC validation; this profile adds no Keycloak OIDC-completion receipt. The browser remains in the initiating RP/Keycloak session: there is no browser-to-app callback, app link, or bearer capability in a URL.
+
+### 11.1 Native opt-in and client policy
+
+A browser-only RP request MUST omit `decent_native_continuation`. Its closed `decent_account_request`, disclosure-context response, existing schema, and vectors remain byte-for-byte unchanged. A native-capable RP MAY include `decent_native_continuation: true` in the signed `decent_account_request`; the value MUST be the JSON boolean `true`. False, null, strings, numbers, or other values are invalid. A separate opted-in request schema requires this literal `true`; consumers select the schema variant from the explicit member and MUST NOT validate browser-only requests against the opted-in schema. Keycloak MUST validate this member from the authenticated RP Request Object and MUST reject any present invalid value.
+
+The RP MUST be a registered confidential OIDC client explicitly enabled for native continuation. It MUST use a server-side registered callback, process the authorization code and ID token server-side, avoid persisting the capability-bearing ID token, and retain only the continuation-capability hash after callback validation. Keycloak MUST reject native opt-in for a public or non-enabled client. The native wallet MUST require the literal-true marker for signup and `signup_recovery`; if it is absent or invalid, the wallet MUST abort before consent and proof. It MUST NOT downgrade an account-creation attempt to ordinary login or to an unapproved browser-only path. If the signed RP request is available to the wallet, it MUST compare its opt-in marker with the context marker; the wallet MUST NOT infer native opt-in from an absent marker. Browser-only flows that omit the marker retain the adopted behavior.
+
+### 11.2 Disclosure-context result
+
+The wallet-login challenge GET remains unchanged and returns exactly `{profile,challenge,csrf_token}`. The separate read-only context endpoint remains:
+
+`GET /realms/{realm}/decent-wallet-login/v1/transactions/{handle}/disclosure-context`
+
+For a valid pending `login` transaction, Keycloak MUST return HTTP 204 with no body. For a valid pending `signup` or `signup_recovery` transaction opted into native continuation, it MUST return HTTP 200 with the exact adopted disclosure-context object plus `decent_native_continuation: true`. For a browser-only signup/recovery request, the response MUST be the unchanged adopted context object with no marker. The marker MUST NOT be returned as `false`.
+
+Malformed, unknown, expired, consumed, cross-client, or mismatched context requests MUST return a generic HTTP 404 with an empty body. All responses MUST be no-store, no-referrer, and non-redirecting; a JSON body uses `Content-Type: application/json`. The endpoint MUST return no OIDC token, wallet proof, Registry record, owner key, capability, or claim value. A native wallet MUST treat any response other than the exact valid login 204 or a valid signup/recovery 200 context containing literal `true` as an error. Missing or invalid context MUST NOT downgrade signup/recovery to login.
+
+### 11.3 Capability issuance and proof-consumption race
+
+For an opted-in native `signup` or `signup_recovery` transaction, Keycloak MUST generate a 32-byte continuation capability from its CSPRNG, encoded base64url without padding. It is an independent bearer credential for the RP continuation GET, not a handle, challenge, request/transaction ID, OIDC or OID4VP state/nonce, JTI, or wallet proof.
+
+Only a metadata-free native proof POST may win the existing wallet transaction and receive this capability. Native means the request has no `Origin` and no `Sec-Fetch-*` headers; this is a transport classification, not app attestation. A browser-origin proof POST for a native-opted transaction MUST receive HTTP 403 with an empty no-store response **before proof consumption or transaction mutation**. It MUST NOT receive a capability. Browser-only transactions retain their existing behavior and receive no capability.
+
+The winning native proof POST MUST return HTTP 200, `Content-Type: application/json`, `Cache-Control: no-store`, and exactly:
+
+```json
+{
+  "profile": "decent-account-disclosure-v1",
+  "decent_account_continuation_capability": "<32-byte-base64url-no-pad>",
+  "expires_at": 1800000299
+}
+```
+
+`expires_at` MUST be an integer Unix time later than Keycloak's current time and no later than the minimum of context/transaction expiry and 300 seconds after proof acceptance. The wallet MUST further cap use at the persisted wallet-approval expiry. Keycloak MUST issue neither an OIDC result nor capability unless it won one-use proof consumption and durably recorded and read back the accepted proof digest, capability hash, expiry, and private transient AuthenticationSession note needed for one-time ID-token issuance. Any failed or uncertain write/readback MUST fail closed without browser fallback; a fresh login is required. Durable Keycloak state MUST store only the capability hash. The raw capability MAY exist only in a private, expiring AuthenticationSession note until ID-token issuance; Keycloak MUST clear it then and on cancellation, failure, expiry, or terminal cleanup. An identical accepted-proof retry MUST return status only, never return or re-mint the capability. If the winning response is lost before the wallet durably stores the capability, the wallet MUST start a fresh end-to-end transaction with new proof and approval; there is no recovery, same-transaction retry, or browser fallback. The new attempt MUST still satisfy the selected signup/recovery principal preconditions.
+
+### 11.4 Keycloak binding and RP OIDC callback
+
+For native opt-in only, the Keycloak-signed Owner-Key binding JWS MUST include:
+
+`continuation_capability_hash = BASE64URL_NOPAD(SHA-256(DECODE_BASE64URL_NOPAD(continuation_capability)))`
+
+The binding JWS expiry MUST be no later than capability expiry and MUST satisfy all adopted binding constraints. The outer OIDC ID token MUST add exactly these native-continuation claims:
+
+- `decent_account_continuation_capability`: the raw 32-byte capability, base64url-no-pad;
+- `decent_account_continuation_expires_at`: the exact integer expiry returned to the winning wallet proof POST.
+
+These claims appear only on an opted-in native transaction. The ID token's ordinary validity follows adopted OIDC rules and has no additional 300-second lifetime cap. The RP MUST validate the ID token and nested binding JWS, including all adopted issuer, audience, nonce, time, identity, action, transaction, request, and key relationships. It MUST hash the decoded capability and constant-time compare it with `continuation_capability_hash`; the proof-response expiry and ID-token expiry claim MUST match. Binding expiry MUST be no later than capability expiry. The RP's signed OID4VP Request Object expiry MUST be no later than both the capability expiry and the verified binding expiry.
+
+The RP MUST use Authorization Code + PKCE with `S256`, `response_mode=form_post`, confidential-client authentication, and the exact registered server-side callback URI. It MUST bind `state` to the initiating transaction, redeem the code over TLS with the exact stored PKCE verifier, and validate the ID-token signature/algorithm, issuer, audience/`azp` where applicable, time, and nonce before enabling continuation polling. It MUST persist only the capability hash, transaction binding, expiry, and continuation state. Raw capability bytes MUST exist only transiently during callback processing and MUST be discarded after hash computation and verification; they MUST NOT be persisted, logged, exposed to browser script, or returned to the wallet. The capability-bearing ID token MUST NOT be persisted. The callback MUST finish with a clean same-origin redirect after removing code/state from the visible URL, using no-store/no-referrer protections and no third-party resources before URL cleanup.
+
+### 11.5 Native polling and request retrieval
+
+After durably storing the capability, expiry, and exact approved pending state inside the existing authenticated encrypted wallet-container v2 payload, the wallet polls:
+
+`GET {rp_origin}/oid4vp/continuations/{transaction_id}`
+
+The wallet MUST require the exact HTTPS RP origin and fixed path, reject user-info, query, fragment, malformed components and redirects, and use normal platform certificate and hostname validation. It MUST place the capability only in an `Authorization` header whose value is the ASCII word `Bearer`, one ASCII space, and the exact base64url-no-pad capability. The capability MUST NOT appear in a URL, body, Referer, intent/App Link, log, or analytics. The wallet MUST treat integer `Retry-After` delta seconds as a minimum delay, combine it with exponential backoff and jitter, and never poll sooner than that value or after expiry.
+
+The RP MUST validate the capability hash in constant time, expiry, and path transaction ID before returning request metadata; the path ID MUST match the stored continuation and the authenticated Request Object's `decent_account.transaction_id`. If the RP learns of OIDC failure or cancellation, it MUST mark the continuation terminal and MUST never release a request. While callback/token/binding validation is incomplete, it returns HTTP 202, empty body, integer `Retry-After`, no-store/no-referrer, and no request URI or account data. Only after successful OIDC validation and confirmation that the RP account is absent may it return HTTP 200 JSON containing exactly `{ "client_id": "x509_san_dns:<lowercase-DNS-name>", "request_uri": "https://<same-rp-origin>/<opaque-locator>" }`. The request URI MUST be a short-lived random locator for signed request metadata only; it MUST NOT be a presentation-submission capability or bearer authorization to create an account. The request URI MUST be same-origin HTTPS, contain no query, fragment, or user-info, and not redirect. It returns the existing profile's ES256-signed Request Object with the existing media type and no-store/no-referrer headers. The request MUST contain no profile values, ID token, capability, or wallet secrets. Every retrieval MUST return the same immutable Request Object bytes; it MUST NOT mint or re-sign a request, JTI, state, or nonce. The RP MUST durably persist and verify those exact bytes before first returning HTTP 200; failure cancels the continuation and requires a fresh login/approval, never regeneration under that capability.
+
+The endpoint returns empty HTTP 410 when a known continuation is expired, consumed, cancelled, or revoked; it returns generic empty HTTP 404 for malformed/unknown capability or continuation ID. All responses are no-store/no-referrer and non-redirecting. A successful atomic `direct_post` acceptance and the adopted RP account/replay transaction MUST also consume/revoke the continuation capability; subsequent polls return 410. The RP MUST retain only a hash-only terminal tombstone for up to five minutes after capability expiry so a matching expired capability can receive 410, then purge it. Unknown credentials MUST receive generic 404. Presentation delivery, response code, and accepted account result remain exactly as defined in §§8–9.
+
+### 11.6 Native conformance artifacts and qualification boundary
+
+The native opted-in request, context, and binding use separate closed schema variants. Existing browser-only schemas and vectors remain unchanged. The native positive bundle is a newly signed complete bundle; the browser-only signed request MUST NOT be relabeled as native. The normative native vector set adds its own positive and negative cases without changing the adopted browser-only `negative.json`. The native verifier MUST validate the native schema additions first, then pass the original signed bundle unchanged to the full base verifier; it MUST NOT strip or rewrite signed artifacts. Its public test keys/capabilities are test-only. The portable generator MUST regenerate a self-consistent set and the regression suite MUST cover regeneration, adopted validation reuse, mismatch/expiry/replay, capability-leakage, and metadata-free transport-policy cases.
+
+These offline schemas, vectors, and verifiers establish only fixed-wire consistency. They do not qualify HTTP runtime behavior, Android UI/device/TLS, Keycloak durability or callback, RP database atomicity, browser continuity, or live secret handling. Wallet, Keycloak, and RP repositories own their implementations and integration evidence. Issue #51 remains open until consumer conformance/runtime evidence and independent human security/privacy review are separately recorded.
+
+## 12. Conformance artifacts and qualification boundaries
+
+The package contains the base browser-compatible JSON Schemas and verifier plus the additive native schema variant, native vector manifest, and native verifier. `verify.py` checks the unchanged adopted browser-only artifacts; `verify_native_continuation.py` checks the native vector set and reuses the full base validation on each original signed bundle. The native generator and regression tests are `generate_native_continuation.py` and `test_native_continuation.py`.
 
 Passing the ecosystem verifier proves only that the package's fixed public vectors and schema are internally consistent. It does not prove wallet UI behavior, encrypted pending-state persistence, Keycloak HTTP/Registry behavior, real OIDC, multi-node durability, RP application database atomicity, or actual no-disclosure ordering. Each component repository MUST consume these exact fixtures unchanged and run its own contract tests. The first RP must also prove no profile claim reaches Keycloak/Storage and no account is created before validating OIDC and the matching presentation.
 
-## 12. Remaining publication, security, and implementation gates
+## 13. Remaining security and implementation gates
 
-Before issue #51 can be marked complete or closed, publish/merge this adopted profile and its vectors; independent security/privacy review must record what each signature proves and does not prove; wallet, Keycloak, and first-RP consumers must run the unchanged vectors and their integration tests; Keycloak/RP tests must prove `signup` creates only a previously absent principal, `signup_recovery` requires a fresh proof for an enabled existing exact principal plus an absent RP account, and recovery fails without disclosure when either precondition is false or the principal is disabled; RP tests must cover open/closed policy and prove closed accounts cannot access the site before administrator approval; and the RP must prove no disclosure occurs before OIDC transaction/ID-token validation. Those component tests belong in their owner repositories, not in this ecosystem package. The issue remains open until every live acceptance criterion and review gate is evidenced.
+Before issue #51 can be marked complete or closed, the amended normative profile, schemas, vectors, and verifiers must be published/merged; independent security/privacy review must record what each signature proves and does not prove; wallet, Keycloak, and first-RP consumers must run the unchanged base and native vectors plus their integration tests; Keycloak/RP tests must prove `signup` creates only a previously absent principal, `signup_recovery` requires a fresh proof for an enabled existing exact principal plus an absent RP account, and recovery fails without disclosure when either precondition is false or the principal is disabled; RP tests must cover open/closed policy and prove closed accounts cannot access the site before administrator approval; and the RP must prove no disclosure occurs before OIDC transaction/ID-token validation. Those component tests belong in their owner repositories, not in this ecosystem package. The issue remains open until every live acceptance criterion and review gate is evidenced.
 
-## 13. Standards references
+## 14. Standards references
 
 - [OpenID for Verifiable Presentations 1.0](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html): Authorization Requests, Request Objects, static discovery audience, `x509_san_dns`, DCQL, `vp_token`, nonce/audience binding, and `direct_post`. This project-defined format is an explicit extension and does not claim generic wallet support.
 - [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0-final.html): Authorization Code flow, ID-token validation, issuer, audience, nonce, and `azp`.
