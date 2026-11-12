@@ -1,6 +1,6 @@
 # Wallet Account Disclosure v1 — ecosystem package
 
-**Status:** The base profile is normative and was merged in [PR #52](https://github.com/jetpen/decent-ecosystem/pull/52). The native continuation amendment has explicit protocol-owner approval; this change promotes it into the normative package. Issue #51 remains open for consumer conformance, runtime qualification, and independent human security/privacy review.
+**Status:** The base profile is normative and was merged in [PR #52](https://github.com/jetpen/decent-ecosystem/pull/52). The native continuation amendment was adopted normatively in [PR #54](https://github.com/jetpen/decent-ecosystem/pull/54) (merge commit `4545d5de8856a576828fb00c17413e9b49d1ad1f`). Issue #51 remains open for consumer conformance, runtime qualification, and independent human security/privacy review.
 
 - [`PROFILE.md`](PROFILE.md): normative profile, including the native Android continuation, wire contract, lifecycle and account-state rules.
 - [`schemas/profile.schema.json`](schemas/profile.schema.json): unchanged browser-compatible JSON Schema 2020-12 definitions for account request/context, Owner-Key binding, OID4VP Request Object/DCQL, direct-post response, self-issued credential and holder-bound VP.
