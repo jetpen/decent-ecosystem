@@ -12,13 +12,16 @@ Canonical vision: [`docs/vision/mvp-scope-and-non-goals.md`](docs/vision/mvp-sco
 
 The ecosystem Social Graph and Web-of-Trust specification, schemas, and conformance assets are indexed under [the protocol specification](docs/protocol/identity-linked-social-graph-and-web-of-trust.md).
 
-Component decompositions:
+Component decompositions and repositories:
 
-- [`decent-registry`](docs/components/decent-registry.md)
-- [`decent-identity`](docs/components/decent-identity.md)
-- [`decent-wallet`](docs/components/decent-wallet.md)
-- [`decent-wordpress-auth`](docs/components/decent-wordpress-auth.md)
-- [`decent-simple-storage`](docs/components/decent-simple-storage.md)
+- [`decent-registry` ecosystem component](docs/components/decent-registry.md) · [repository](https://github.com/jetpen/decent-registry)
+- [`decent-identity` ecosystem component](docs/components/decent-identity.md) · [repository](https://github.com/jetpen/decent-identity)
+- [`decent-wallet` ecosystem component](docs/components/decent-wallet.md) · [repository](https://github.com/jetpen/decent-wallet)
+- [`decent-wordpress-auth` ecosystem component](docs/components/decent-wordpress-auth.md) · [repository](https://github.com/jetpen/decent-wordpress-auth)
+- [`decent-simple-storage` ecosystem component](docs/components/decent-simple-storage.md) · [repository](https://github.com/jetpen/decent-simple-storage)
+
+- [`decent-keycloak` ecosystem component](docs/components/decent-keycloak.md) · [repository](https://github.com/jetpen/decent-keycloak)
+- [`decent-social` ecosystem component](docs/components/decent-social.md) · repository URL unresolved
 
 Research: [`docs/research/wordpress-authentication-challenge.md`](docs/research/wordpress-authentication-challenge.md)
 
@@ -51,7 +54,7 @@ Multisig serves the purpose of multi-factor authentication.
 ### Web site participation in Single Sign-On (SSO)
 
 Provide the components for web sites to integrate into the
-decentralized p2p network for a identity and data registry, so that
+decentralized p2p network for an identity and data registry, so that
 users have SSO universally across participating web sites with no
 central authority. That would be an attractive proposition.
 
